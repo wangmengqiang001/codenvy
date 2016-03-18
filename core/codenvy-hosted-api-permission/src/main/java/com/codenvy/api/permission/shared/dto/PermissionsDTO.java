@@ -1,0 +1,49 @@
+/*
+ *  [2012] - [2016] Codenvy, S.A.
+ *  All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Codenvy S.A. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Codenvy S.A.
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Codenvy S.A..
+ */
+package com.codenvy.api.permission.shared.dto;
+
+import org.eclipse.che.dto.shared.DTO;
+
+import java.util.List;
+
+/**
+ * @author Sergii Leschenko
+ */
+@DTO
+public interface PermissionsDTO {
+    String getUser();
+
+    void setUser(String user);
+
+    PermissionsDTO withUser(String user);
+
+    String getDomain();
+
+    void setDomain(String domain);
+
+    PermissionsDTO withDomain(String domain);
+
+    String getInstance();
+
+    void setInstance(String instance);
+
+    PermissionsDTO withInstance(String instance);
+
+    List<String> getActions();
+
+    void setActions(List<String> actions);
+
+    PermissionsDTO withActions(List<String> actions);
+}

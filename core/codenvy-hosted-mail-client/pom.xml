@@ -122,7 +122,7 @@
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>add-resource</id>
+                        <id>add-domain</id>
                         <phase>process-sources</phase>
                         <goals>
                             <goal>add-resource</goal>
