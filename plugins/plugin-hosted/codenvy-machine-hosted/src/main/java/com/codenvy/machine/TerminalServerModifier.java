@@ -12,29 +12,19 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.swarm.client.json;
+package com.codenvy.machine;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
- * Represents node where docker runs.
- * Used for workarounds because of not implemented APIs in Swarm
+ * Modifies websocket terminal machine server to proxy requests to it.
  *
- * @author Eugene Voevodin
+ * @author Alexander Garagatyi
  */
-public class DockerNode {
-    //TODO add ram and containers ?
-    private final String hostname;
-    private final String addr;
-
-    public DockerNode(String hostname, String addr) {
-        this.hostname = hostname;
-        this.addr = addr;
-    }
-
-    public String getAddr() {
-        return addr;
-    }
-
-    public String getHostname() {
-        return hostname;
+public class TerminalServerModifier extends BaseServerModifier {
+    @Inject
+    public TerminalServerModifier(@Named("machine.https_terminal_server_url_template") String serverUrlTemplate) {
+        super(serverUrlTemplate);
     }
 }

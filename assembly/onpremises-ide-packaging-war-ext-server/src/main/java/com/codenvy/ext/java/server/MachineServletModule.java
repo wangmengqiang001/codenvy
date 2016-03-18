@@ -14,7 +14,6 @@
  */
 package com.codenvy.ext.java.server;
 
-
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.ServletModule;
