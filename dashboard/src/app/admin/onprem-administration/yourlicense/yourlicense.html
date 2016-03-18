@@ -17,7 +17,7 @@
     from Codenvy S.A..
 
 -->
-<che-panel che-title="Subscription">
+<che-panel che-title="License">
   <div class="onprem-license-loader">
     <md-progress-linear md-mode="indeterminate" ng-if="onPremisesAdminYourLicenseCtrl.isLoading"></md-progress-linear>
   </div>
@@ -105,7 +105,7 @@
           <div flex="90" layout="column" layout-align="center start" class="input-part">
             <label class="che-label-container-label">License Key:</label>
             <textarea type="text" class="license-input" name="licenseKey" ng-maxlength="3072"
-                      required="required" placeholder="####-####-####-####"
+                      required="required" placeholder="Enter your license key"
                       ng-readonly="onPremisesAdminYourLicenseCtrl.licenseState==='LICENSE'"
                       ng-model="onPremisesAdminYourLicenseCtrl.newLicense"
                       ng-change="onPremisesAdminYourLicenseCtrl.isLicenseInvalid = false"></textarea>
@@ -113,10 +113,9 @@
             <div class="license-state-info">
               <span ng-if="onPremisesAdminYourLicenseCtrl.licenseState==='LICENSE'" class="valid-color">Valid key</span>
               <span ng-if="onPremisesAdminYourLicenseCtrl.isLicenseInvalid && licenseForm.$valid"
-                    class="error-color">Invalid License key.</span>
+                    class="error-color">Invalid license key.</span>
 
               <div ng-messages="licenseForm.licenseKey.$error" class="error-color">
-                <span ng-message="required">License is required.</span>
                 <span ng-message="maxlength">The license has to be less than 3072 characters long.</span>
               </div>
             </div>

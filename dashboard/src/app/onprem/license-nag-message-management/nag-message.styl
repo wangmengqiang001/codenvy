@@ -5,9 +5,11 @@
   position fixed
   z-index 16777271
   line-height 30px
-  max-height 30px
-  overflow-x auto
   text-align center
+  max-height 30px
+  overflow-y auto
+  box-sizing content-box
+  border 1px solid $config-frame-warning-color
   background-color $config-frame-warning-color
 
 .license-message a
@@ -18,4 +20,7 @@
   che-brightness(90%)
 
 .license-message-indent
-  top 30px
+  padding-top 30px
+
+.license-message-indent .left-sidebar-container
+  height calc(100vh - 30px)

@@ -26,7 +26,7 @@ export class YourInstallationPanel {
   constructor () {
     this.restrict='E';
     this.replace=false;
-    this.templateUrl = 'app/onpremises/admin/onprem-administration/installation/yourinstall/yourinstall.html';
+    this.templateUrl = 'app/admin/onprem-administration/installation/yourinstall/yourinstall.html';
     this.controller = 'YourInstallationCtrl';
     this.controllerAs = 'yourInstallationCtrl';
   }

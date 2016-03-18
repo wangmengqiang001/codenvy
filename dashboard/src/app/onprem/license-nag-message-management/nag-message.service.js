@@ -40,50 +40,42 @@ export class NagMessageService {
       return;
     }
     // create nag message element
-    let item = angular.element('<cdvy-nag-message></cdvy-nag-message>');
-    item.attr('id', this.nagMessageId);
+    let jqItem = angular.element('<cdvy-nag-message></cdvy-nag-message>');
+    jqItem.attr('id', this.nagMessageId);
     // compile
-    this.nagMessageElement = this.$compile(item)(angular.element(this.$document.find('body')[0]).scope());
+    this.nagMessageElement = this.$compile(jqItem)(angular.element(this.$document.find('body')[0]).scope());
   }
 
   /**
-   * Show nag message
+   * Show license message
    * @returns {boolean} - true if successful
    */
   showLicenseMessage() {
-    //the parent of the new element
-    let parentElement = this.$document.find('body');
-    let itemId = this.nagMessageElement.attr('id');
-
-    if (!itemId) {
+    if (this.$document[0].getElementById(this.nagMessageId) || !this.nagMessageElement) {
       return false;
     }
+    //the parent of the new element
+    let jqParentElement = angular.element(this.$document.find('body'));
 
-    let oldItem = this.$document[0].getElementById(itemId);
-    if (oldItem) {
-      oldItem.remove();
-    } else {
-      parentElement.addClass('license-message-indent');
-    }
+    this.nagMessageElement.prependTo(jqParentElement);
+    jqParentElement.addClass('license-message-indent');
 
-    parentElement.append(this.nagMessageElement);
     return true;
   }
 
-
   /**
-   * hide nag message
+   * Hide license message
    * @returns {boolean} - true if successful
    */
   hideLicenseMessage() {
     let findElement = this.$document[0].getElementById(this.nagMessageId);
-
     if (findElement) {
       findElement.remove();
-      this.$document.find('body').removeClass('license-message-indent');
+      //the parent of the new element
+      let jqParentElement = angular.element(this.$document.find('body'));
+      jqParentElement.removeClass('license-message-indent');
       return true;
     }
-
     return false;
   }
 

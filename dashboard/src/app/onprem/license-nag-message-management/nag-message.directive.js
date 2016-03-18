@@ -27,7 +27,6 @@ export class NagMessage {
   constructor() {
     this.restrict = 'E';
     this.replace = false;
-    this.transclude = true;
     this.bindToController = true;
     this.controller = 'NagMessageCtrl';
     this.controllerAs = 'nagMessageCtrl';

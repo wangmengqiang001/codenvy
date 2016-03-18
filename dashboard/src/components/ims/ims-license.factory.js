@@ -44,7 +44,8 @@ export class ImsLicenseApi {
           'Content-Type': 'text/plain'
         }
       },
-      getProperties: {method: 'GET', url: '/im/license/properties'}
+      getProperties: {method: 'GET', url: '/im/license/properties'},
+      getLegality: {method: 'GET', url: '/im/license/legality'}
     });
 
     // current license
@@ -55,6 +56,8 @@ export class ImsLicenseApi {
 
     // default number of free users
     this.numberOfFreeUsers = 5;
+
+    this.licenseLegality = {};
   }
 
   /**
@@ -98,6 +101,7 @@ export class ImsLicenseApi {
       //update current license
       this.currentLicense.key = null;//remove license key
       this.currentLicense.properties = null;//remove license properties
+      this.fetchLicenseLegality();//fetch license legality
     });
 
     return promise;
@@ -176,6 +180,7 @@ export class ImsLicenseApi {
 
   /**
    * Add license.
+   * @param licenseKey
    * @returns {*} the promise
    */
   addLicense(licenseKey) {
@@ -185,8 +190,32 @@ export class ImsLicenseApi {
     promise.then(() => {
       //update current license
       this.currentLicense.key = licenseKey;//add license key
+      this.fetchLicenseLegality();//fetch license legality
     });
 
     return promise;
+  }
+
+  /**
+   * Ask for the users license legality in asynchronous way
+   * @returns {*} the promise
+   */
+  fetchLicenseLegality() {
+    let promise = this.remoteLicenseAPI.getLegality().$promise;
+
+    // check if was OK or not
+    promise.then((licenseLegality) => {
+        this.licenseLegality = licenseLegality;
+    });
+
+    return promise;
+  }
+
+  /**
+   * Gets the users license legality
+   * @returns {*} the promise
+   */
+  getLicenseLegality() {
+    return this.licenseLegality;
   }
 }

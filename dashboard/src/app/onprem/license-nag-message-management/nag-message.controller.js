@@ -25,15 +25,29 @@ export class NagMessageCtrl {
    * @ngInject for Dependency injection
    */
   constructor($scope, cheAPI, codenvyAPI, imsLicenseApi, nagMessageService, imsArtifactApi) {
+    this.$scope = $scope;
     this.cheAPI = cheAPI;
     this.codenvyAPI = codenvyAPI;
     this.imsLicenseApi = imsLicenseApi;
     this.nagMessageService = nagMessageService;
 
     this.ims = imsArtifactApi.getIms();
+    this.licenseLegality = imsLicenseApi.getLicenseLegality();
+    this.numberOfFreeUsers = imsLicenseApi.getNumberOfFreeUsers();
 
+    this.checkLicenseStatus();
+  }
+
+  /**
+   * Check the installation manager status
+   */
+  checkLicenseStatus() {
+    if (this.ims.isAvailable) {
+      this.updateLicense();
+      return;
+    }
     //returns an unregister function
-    var unregister = $scope.$watch(()=> {
+    var unregister = this.$scope.$watch(()=> {
       return this.ims.isAvailable;
     }, (isAvailable)=> {
       if (!isAvailable) {
@@ -42,67 +56,32 @@ export class NagMessageCtrl {
       this.updateLicense();
       unregister();
     });
-
-    this.numberOfFreeUsers = imsLicenseApi.getNumberOfFreeUsers();
   }
 
-
   /**
-   * Update license's properties
+   * Update license's properties if installation manager is available
    */
   updateLicense() {
-    this.currentLicense = this.imsLicenseApi.getLicense();
+    this.checkLegality(this.licenseLegality);
 
-    if (!this.currentLicense || !this.currentLicense.properties) {
-      let promise = this.imsLicenseApi.fetchLicenseProperties();
+    this.imsLicenseApi.fetchLicenseLegality();
 
-      promise.then(() => {
-        this.checkLicenseStatus();
-      }, () => { //if no license
-        // check the number of allowed user
-        this.checkNumberOfUsers();
-      });
-    } else {
-      this.checkLicenseStatus();
-    }
+    //returns an unregister function
+    this.$scope.$watch(()=> {
+      return this.imsLicenseApi.getLicenseLegality();
+    }, (newLicenseLegality)=> {
+      this.checkLegality(newLicenseLegality);
+    });
   }
 
   /**
-   * Check the number of allowed user
+   * Check the license legality
    */
-  checkNumberOfUsers() {
-    let numberOfAllowedUsers = this.imsLicenseApi.getNumberOfAllowedUsers();
-
-    // if admin
-    if (this.cheAPI.getUser().isAdmin()) {
-      // check number of allowed user
-      this.codenvyAPI.getUser().fetchUsers(1, numberOfAllowedUsers + 1).then((remoteUsers) => {
-        if (remoteUsers.length > 0) {
-          this.nagMessageService.showLicenseMessage();
-        } else {
-          this.nagMessageService. hideLicenseMessage();
-        }
-      });
-    }
-    //TODO: add check for users
-  }
-
-  /**
-   * Check the license status
-   */
-  checkLicenseStatus() {
-    let properties = this.currentLicense ? this.currentLicense.properties : null;
-    //if no license
-    if (!properties) {
-      this.checkNumberOfUsers();
-      return;
-    }
-    //if license expired
-    if (properties.isExpired === 'true') {
+  checkLegality(licenseLegality) {
+    if (licenseLegality && licenseLegality.value === 'false') {
       this.nagMessageService.showLicenseMessage();
-      return;
+    } else {
+      this.nagMessageService.hideLicenseMessage();
     }
-    //if valid license
-    this.checkNumberOfUsers();
   }
 }
