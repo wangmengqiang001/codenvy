@@ -14,9 +14,11 @@
  */
 package com.codenvy.api.permission.server;
 
+import org.eclipse.che.api.core.ServerException;
+
 /**
  * @author Sergii Leschenko
  */
 public interface PermissionChecker {
-    boolean hasPermission(String user, String domain, String instance, String action);
+    boolean hasPermission(String user, String domain, String instance, String action) throws ServerException;
 }

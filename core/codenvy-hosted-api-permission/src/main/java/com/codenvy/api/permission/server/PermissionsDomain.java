@@ -14,9 +14,12 @@
  */
 package com.codenvy.api.permission.server;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
+ * Describes permissions domain
+ *
  * @author gazarenkov
  * @author Sergii Leschenko
  */
@@ -29,11 +32,42 @@ public class PermissionsDomain {
         this.allowedActions = allowedActions;
     }
 
+    /**
+     * Returns id of permissions domain
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Returns list actions which are allowed for domain
+     */
     public Set<String> getAllowedActions() {
         return allowedActions;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof PermissionsDomain)) return false;
+        final PermissionsDomain other = (PermissionsDomain)obj;
+        return Objects.equals(id, other.id) &&
+               Objects.equals(allowedActions, other.allowedActions);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + Objects.hashCode(id);
+        hash = 31 * hash + Objects.hashCode(allowedActions);
+        return hash;
+    }
+
+    @Override
+    public String toString() {
+        return "PermissionsDomain{" +
+               "id='" + id + '\'' +
+               ", allowedActions=" + allowedActions +
+               "}";
     }
 }

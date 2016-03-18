@@ -19,6 +19,7 @@ import org.eclipse.che.dto.shared.DTO;
 import java.util.List;
 
 /**
+ * TODO Think about extend class Permissions here and move shared DTO to separated module
  * @author Sergii Leschenko
  */
 @DTO

@@ -16,15 +16,14 @@ package com.codenvy.api.permission.server.dao;
 
 import com.codenvy.api.permission.server.Permissions;
 import com.codenvy.api.permission.server.PermissionsDomain;
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.UpdateOptions;
 
 import org.bson.Document;
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 
 import javax.inject.Inject;
@@ -45,7 +44,9 @@ import static java.util.function.Function.identity;
 /**
  * Common implementation for {@link PermissionsStorage} based on MongoDB storage.
  *
- * <p>Example of using common storage
+ * <p>Stores permissions of domains that bound by {@link CommonDomain}
+ *
+ * <p>Example of binding domain
  * <pre>
  *     Multibinder<PermissionsDomain> multibinder = Multibinder.newSetBinder(binder(), PermissionsDomain.class, CommonDomain.class);
  *     multibinder.addBinding().toInstance(new PermissionsDomain("myDomain",
@@ -93,47 +94,80 @@ public class CommonPermissionStorage implements PermissionsStorage {
     }
 
     @Override
-    public void store(Permissions permission) throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
-        if (!idToDomain.containsKey(permission.getDomain())) {
-            throw new BadRequestException("Storage doesn't support domain with id " + permission.getDomain());
+    public void store(Permissions permission) throws ServerException {
+        final PermissionsDomain permissionsDomain = idToDomain.get(permission.getDomain());
+        if (permissionsDomain == null) {
+            throw new IllegalArgumentException("Storage doesn't support domain with id '" + permission.getDomain() + "'");
         }
 
-        collection.replaceOne(and(eq("user", permission.getUser()),
-                                  eq("domain", permission.getDomain()),
-                                  eq("instance", permission.getInstance())),
-                              permission,
-                              new UpdateOptions().upsert(true));
+        final Set<String> allowedActions = permissionsDomain.getAllowedActions();
+        final Set<String> unsupportedActions = permission.getActions()
+                                                         .stream()
+                                                         .filter(action -> !allowedActions.contains(action))
+                                                         .collect(Collectors.toSet());
+        if (!unsupportedActions.isEmpty()) {
+            throw new IllegalArgumentException("Domain with id '" + permission.getDomain() + "' doesn't support next action(s): " +
+                                               unsupportedActions.stream()
+                                                                 .collect(Collectors.joining(", ")));
+        }
+
+
+        try {
+            collection.replaceOne(and(eq("user", permission.getUser()),
+                                      eq("domain", permission.getDomain()),
+                                      eq("instance", permission.getInstance())),
+                                  permission,
+                                  new UpdateOptions().upsert(true));
+        } catch (MongoException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
     }
 
     @Override
     public void remove(String user, String domain, String instance) throws ServerException,
-                                                                           BadRequestException,
-                                                                           NotFoundException,
                                                                            ForbiddenException {
-        collection.deleteOne(and(eq("user", user),
-                                 eq("domain", domain),
-                                 eq("instance", instance)));
+        try {
+            collection.deleteOne(and(eq("user", user),
+                                     eq("domain", domain),
+                                     eq("instance", instance)));
+        } catch (MongoException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
     }
 
     @Override
-    public Set<Permissions> get(String user) {
-        return collection.find(eq("user", user))
-                         .into(new HashSet<>());
+    public Set<Permissions> get(String user) throws ServerException {
+        try {
+            return collection.find(eq("user", user))
+                             .into(new HashSet<>());
+        } catch (MongoException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
     }
 
     @Override
-    public Set<Permissions> get(String user, String domain) {
-        return collection.find(and(eq("user", user),
-                                   eq("domain", domain)))
-                         .into(new HashSet<>());
+    public Set<Permissions> get(String user, String domain) throws ServerException {
+        try {
+            return collection.find(and(eq("user", user),
+                                       eq("domain", domain)))
+                             .into(new HashSet<>());
+        } catch (MongoException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
     }
 
     @Override
-    public Permissions get(String user, String domain, String instance) {
-        final Permissions found = collection.find(and(eq("user", user),
-                                                      eq("domain", domain),
-                                                      eq("instance", instance)))
-                                            .first();
+    public Permissions get(String user, String domain, String instance) throws ServerException {
+        Permissions found;
+        try {
+            found = collection.find(and(eq("user", user),
+                                        eq("domain", domain),
+                                        eq("instance", instance)))
+                              .first();
+        } catch (MongoException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
+
         if (found == null) {
             //TODO Maybe we should throw exception here
             return new Permissions(user, domain, instance, Collections.emptyList());
@@ -143,19 +177,27 @@ public class CommonPermissionStorage implements PermissionsStorage {
     }
 
     @Override
-    public Set<Permissions> getByInstance(String domain, String instance) {
-        return collection.find(and(eq("domain", domain),
-                                   eq("instance", instance)))
-                         .into(new HashSet<>());
+    public Set<Permissions> getByInstance(String domain, String instance) throws ServerException {
+        try {
+            return collection.find(and(eq("domain", domain),
+                                       eq("instance", instance)))
+                             .into(new HashSet<>());
+        } catch (MongoException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
     }
 
     @Override
-    public boolean exists(String user, String domain, String instance, String requiredAction) {
-        final Permissions found = collection.find(and(eq("user", user),
-                                                      eq("domain", domain),
-                                                      eq("instance", instance),
-                                                      in("actions", requiredAction)))
-                                            .first();
-        return found != null;
+    public boolean exists(String user, String domain, String instance, String requiredAction) throws ServerException {
+        try {
+            final Permissions found = collection.find(and(eq("user", user),
+                                                          eq("domain", domain),
+                                                          eq("instance", instance),
+                                                          in("actions", requiredAction)))
+                                                .first();
+            return found != null;
+        } catch (MongoException e) {
+            throw new ServerException(e.getMessage(), e);
+        }
     }
 }

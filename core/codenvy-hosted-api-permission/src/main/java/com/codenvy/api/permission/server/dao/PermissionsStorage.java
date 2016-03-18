@@ -17,9 +17,7 @@ package com.codenvy.api.permission.server.dao;
 import com.codenvy.api.permission.server.Permissions;
 import com.codenvy.api.permission.server.PermissionsDomain;
 
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 
 import java.util.Set;
@@ -48,43 +46,43 @@ public interface PermissionsStorage {
      * @param permission
      *         permission to store
      */
-    void store(Permissions permission) throws BadRequestException, ForbiddenException, NotFoundException, ServerException;
+    void store(Permissions permission) throws ServerException;
 
     /**
      * @param user
      *         user id
      * @return set of permissions
      */
-    Set<Permissions> get(String user);
-
-    /**
-     * @param user
-     *         user id
-     * @param domain
-     *         domain id
-     * @return set of permissions
-     */
-    Set<Permissions> get(String user, String domain);
+    Set<Permissions> get(String user) throws ServerException;
 
     /**
      * @param user
      *         user id
      * @param domain
      *         domain id
-     * @param instance
-     *         instance id
      * @return set of permissions
      */
-    Permissions get(String user, String domain, String instance);
+    Set<Permissions> get(String user, String domain) throws ServerException;
 
     /**
+     * @param user
+     *         user id
      * @param domain
      *         domain id
      * @param instance
      *         instance id
      * @return set of permissions
      */
-    Set<Permissions> getByInstance(String domain, String instance);
+    Permissions get(String user, String domain, String instance) throws ServerException;
+
+    /**
+     * @param domain
+     *         domain id
+     * @param instance
+     *         instance id
+     * @return set of permissions
+     */
+    Set<Permissions> getByInstance(String domain, String instance) throws ServerException;
 
     /**
      * @param user
@@ -97,10 +95,10 @@ public interface PermissionsStorage {
      *         action name
      * @return true if the permission exists
      */
-    boolean exists(String user, String domain, String instance, String action);
+    boolean exists(String user, String domain, String instance, String action) throws ServerException;
 
     /**
-     * Removes all the permissions related to the particular user, domain and instance
+     * Removes permissions of user related to the particular instance of specified domain
      *
      * @param user
      *         user id
@@ -110,7 +108,5 @@ public interface PermissionsStorage {
      *         instance id
      */
     void remove(String user, String domain, String instance) throws ServerException,
-                                                                    BadRequestException,
-                                                                    NotFoundException,
                                                                     ForbiddenException;
 }

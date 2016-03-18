@@ -26,6 +26,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
+ * Restricts access to removing permissions of instance by users' setPermissions permission
+ *
  * @author Sergii Leschenko
  */
 @Filter

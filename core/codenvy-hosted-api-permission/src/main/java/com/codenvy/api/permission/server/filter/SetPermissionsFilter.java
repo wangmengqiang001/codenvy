@@ -27,6 +27,8 @@ import org.everrest.core.resource.GenericMethodResource;
 import javax.ws.rs.Path;
 
 /**
+ * Restricts access to setting permissions of instance by users' setPermissions permission
+ *
  * @author Sergii Leschenko
  */
 @Filter
@@ -36,7 +38,7 @@ public class SetPermissionsFilter extends CheMethodInvokerFilter {
     public void filter(GenericMethodResource genericMethodResource, Object[] arguments)
             throws UnauthorizedException, ForbiddenException, ServerException {
         final String methodName = genericMethodResource.getMethod().getName();
-        if (methodName.equals("setPermissions")) {
+        if (methodName.equals("storePermissions")) {
             final PermissionsDTO permissions = (PermissionsDTO)arguments[0];
 
             if (!EnvironmentContext.getCurrent().getUser().hasPermission(permissions.getDomain(),

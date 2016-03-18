@@ -14,9 +14,8 @@
  */
 package com.codenvy.api.workspace.server;
 
-import com.codenvy.api.permission.server.PermissionsDomain;
-import com.codenvy.api.permission.server.dao.CommonDomain;
 import com.codenvy.api.permission.server.dao.CommonPermissionStorage;
+import com.codenvy.api.permission.server.dao.PermissionsStorage;
 import com.google.common.collect.ImmutableSet;
 import com.mongodb.client.MongoDatabase;
 
@@ -31,9 +30,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Set;
 
 /**
+ * Implementation of {@link PermissionsStorage} for storing permissions of {@link WorkspaceDomain}
+ *
+ * <p>This implementation based on {@link CommonPermissionStorage} and contains checking
+ * that is typical only for {@link WorkspaceDomain}'s permissions
+ *
  * @author Sergii Leschenko
  */
 @Singleton
@@ -43,17 +46,15 @@ public class WorkspacePermissionStorage extends CommonPermissionStorage {
     @Inject
     public WorkspacePermissionStorage(@Named("mongo.db.organization") MongoDatabase database,
                                       @Named("organization.storage.db.permission.collection") String collectionName,
-                                      @CommonDomain Set<PermissionsDomain> permissionsDomains,
                                       WorkspaceManager workspaceManager) throws IOException {
         super(database, collectionName, ImmutableSet.of(new WorkspaceDomain()));
         this.workspaceManager = workspaceManager;
     }
 
     @Override
-    public void remove(String user, String domain, String instance)
-            throws ServerException, BadRequestException, NotFoundException, ForbiddenException {
+    public void remove(String user, String domain, String instance) throws ServerException, ForbiddenException {
         if (!WorkspaceDomain.DOMAIN_ID.equals(domain)) {
-            throw new BadRequestException("Unsupported domain");
+            throw new IllegalArgumentException("Unsupported domain");
         }
 
         try {
@@ -63,6 +64,8 @@ public class WorkspacePermissionStorage extends CommonPermissionStorage {
             }
         } catch (NotFoundException e) {
             //allow to remove permissions of owner to non existent workspace
+        } catch (BadRequestException e) {
+            throw new ServerException(e);
         }
 
         super.remove(user, domain, instance);

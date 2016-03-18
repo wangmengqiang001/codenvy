@@ -16,6 +16,7 @@ package com.codenvy.api.permission.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents users' permissions to access to some resources
@@ -36,19 +37,62 @@ public class Permissions {
         this.actions = new ArrayList<>(actions);
     }
 
+    /**
+     * Returns used id
+     */
     public String getUser() {
         return user;
     }
 
+    /**
+     * Returns domain id
+     */
     public String getDomain() {
         return domain;
     }
 
+    /**
+     * Returns instance id
+     */
     public String getInstance() {
         return instance;
     }
 
+    /**
+     * List of actions which user can perform for particular instance
+     */
     public List<String> getActions() {
         return actions;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Permissions)) return false;
+        final Permissions other = (Permissions)obj;
+        return Objects.equals(user, other.user) &&
+               Objects.equals(domain, other.domain) &&
+               Objects.equals(instance, other.instance) &&
+               Objects.equals(actions, other.actions);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + Objects.hashCode(user);
+        hash = 31 * hash + Objects.hashCode(domain);
+        hash = 31 * hash + Objects.hashCode(instance);
+        hash = 31 * hash + Objects.hashCode(actions);
+        return hash;
+    }
+
+    @Override
+    public String toString() {
+        return "Permissions{" +
+               "user='" + user + '\'' +
+               ", domain='" + domain + '\'' +
+               ", instance='" + instance + '\'' +
+               ", actions=" + actions +
+               '}';
     }
 }

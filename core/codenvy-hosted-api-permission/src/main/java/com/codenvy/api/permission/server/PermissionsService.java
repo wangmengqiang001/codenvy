@@ -74,14 +74,19 @@ public class PermissionsService extends Service {
         return permissionManager.getDomainsActions(domain);
     }
 
+    /**
+     * Stores permissions
+     *
+     * @param permissionsDto
+     *         permissions to storing
+     */
     @POST
     @Consumes(APPLICATION_JSON)
-    public void setPermissions(PermissionsDTO permissionsDto)
-            throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
-        permissionManager.setPermission(new Permissions(permissionsDto.getUser(),
-                                                        permissionsDto.getDomain(),
-                                                        permissionsDto.getInstance(),
-                                                        permissionsDto.getActions()));
+    public void storePermissions(PermissionsDTO permissionsDto) throws ServerException {
+        permissionManager.storePermission(new Permissions(permissionsDto.getUser(),
+                                                          permissionsDto.getDomain(),
+                                                          permissionsDto.getInstance(),
+                                                          permissionsDto.getActions()));
     }
 
     /**
@@ -95,7 +100,7 @@ public class PermissionsService extends Service {
     @Path("/{domain}/{instance}")
     @Produces(APPLICATION_JSON)
     public List<String> getUsersPermissions(@PathParam("domain") String domain,
-                                            @PathParam("instance") String instance) {
+                                            @PathParam("instance") String instance) throws ServerException {
         final Permissions permissions = permissionManager.get(EnvironmentContext.getCurrent().getUser().getId(), domain, instance);
         if (permissions != null) {
             return permissions.getActions();
@@ -103,10 +108,18 @@ public class PermissionsService extends Service {
         return Collections.emptyList();
     }
 
+    /**
+     * Returns list of permissions which are related to specified domain and instance
+     *
+     * @param domain
+     *         id of domain
+     * @param instance
+     *         id of instance
+     */
     @GET
     @Path("/{domain}/{instance}/list")
     public List<PermissionsDTO> getUsersPermissionsByInstance(@PathParam("domain") String domain,
-                                                              @PathParam("instance") String instance) {
+                                                              @PathParam("instance") String instance) throws ServerException {
         return permissionManager.getByInstance(domain, instance)
                                 .stream()
                                 .map(permissions -> DtoFactory.newDto(PermissionsDTO.class)
@@ -118,7 +131,7 @@ public class PermissionsService extends Service {
     }
 
     /**
-     * Removes all the permissions related to the specified user, domain and instance
+     * Removes permissions of user related to the particular instance of specified domain
      *
      * @param user
      *         user id

@@ -24,12 +24,15 @@ import org.eclipse.che.api.core.ServerException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
+ * Class that holds supported {@link PermissionsStorage} and delegates calls to them
+ *
  * @author gazarenkov
+ * @author Sergii Leschenko
  */
 @Singleton
 public class PermissionManager {
@@ -50,42 +53,73 @@ public class PermissionManager {
         }
     }
 
-    public void setPermission(Permissions permission) throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
+    /**
+     * @see PermissionsStorage#store(Permissions)
+     */
+    public void storePermission(Permissions permission) throws ServerException {
         domainToStorage.get(permission.getDomain()).store(permission);
     }
 
-    public Permissions get(String user, String domain, String instance) {
+    /**
+     * @see PermissionsStorage#get(String, String, String)
+     */
+    public Permissions get(String user, String domain, String instance) throws ServerException {
         return domainToStorage.get(domain).get(user, domain, instance);
     }
 
-    public Set<Permissions> getByInstance(String domain, String instance) {
+    /**
+     * @see PermissionsStorage#getByInstance(String, String)
+     */
+    public Set<Permissions> getByInstance(String domain, String instance) throws ServerException {
         return domainToStorage.get(domain).getByInstance(domain, instance);
     }
 
-    public Set<Permissions> get(String user) {
-        return domainToStorage.values()
-                              .stream()
-                              .flatMap(storage -> storage.get(user).stream())
-                              .collect(Collectors.toSet());
+    /**
+     * @see PermissionsStorage#get(String)
+     */
+    public Set<Permissions> get(String user) throws ServerException {
+        Set<Permissions> result = new HashSet<>();
+        for (PermissionsStorage permissionsStorage : domainToStorage.values()) {
+            result.addAll(permissionsStorage.get(user));
+        }
+        return result;
     }
 
-    public Set<Permissions> get(String user, String domain) {
+    /**
+     * @see PermissionsStorage#get(String)
+     */
+    public Set<Permissions> get(String user, String domain) throws ServerException {
         return domainToStorage.get(domain).get(user, domain);
     }
 
+    /**
+     * @see PermissionsStorage#remove(String, String, String)
+     */
     public void remove(String user, String domain, String instance)
             throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
         domainToStorage.get(domain).remove(user, domain, instance);
     }
 
-    public boolean exists(String user, String domain, String instance, String action) {
+    /**
+     * @see PermissionsStorage#exists(String, String, String, String)
+     */
+    public boolean exists(String user, String domain, String instance, String action) throws ServerException {
         return domainToStorage.get(domain).exists(user, domain, instance, action);
     }
 
+    /**
+     * Returns identifiers of supported domains
+     */
     public Set<String> getDomains() {
         return domains.keySet();
     }
 
+    /**
+     * Returns supported actions of specified domain
+     *
+     * @param domainId
+     *         id of domain
+     */
     public Set<String> getDomainsActions(String domainId) {
         return domains.get(domainId).getAllowedActions();
     }

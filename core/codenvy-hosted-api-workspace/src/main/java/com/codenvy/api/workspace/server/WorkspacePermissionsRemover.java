@@ -53,7 +53,14 @@ public class WorkspacePermissionsRemover implements EventSubscriber<WorkspaceRem
 
     @Override
     public void onEvent(WorkspaceRemovedEvent event) {
-        final Set<Permissions> permissions = permissionManager.getByInstance(WorkspaceDomain.DOMAIN_ID, event.getWorkspaceId());
+        final Set<Permissions> permissions;
+        try {
+            permissions = permissionManager.getByInstance(WorkspaceDomain.DOMAIN_ID, event.getWorkspaceId());
+        } catch (ServerException e) {
+            LOG.error("Can't get user's permissions of workspace '" + event.getWorkspaceId() + "'", e);
+            return;
+        }
+
         for (Permissions permission : permissions) {
             try {
                 permissionManager.remove(permission.getUser(), permission.getDomain(), permission.getInstance());
