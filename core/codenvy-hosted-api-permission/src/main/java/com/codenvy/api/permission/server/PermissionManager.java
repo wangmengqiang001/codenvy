@@ -23,8 +23,10 @@ import org.eclipse.che.api.core.ServerException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,15 +72,15 @@ public class PermissionManager {
     /**
      * @see PermissionsStorage#getByInstance(String, String)
      */
-    public Set<Permissions> getByInstance(String domain, String instance) throws ServerException {
+    public List<Permissions> getByInstance(String domain, String instance) throws ServerException {
         return domainToStorage.get(domain).getByInstance(domain, instance);
     }
 
     /**
      * @see PermissionsStorage#get(String)
      */
-    public Set<Permissions> get(String user) throws ServerException {
-        Set<Permissions> result = new HashSet<>();
+    public List<Permissions> get(String user) throws ServerException {
+        List<Permissions> result = new ArrayList<>();
         for (PermissionsStorage permissionsStorage : domainToStorage.values()) {
             result.addAll(permissionsStorage.get(user));
         }
@@ -88,7 +90,7 @@ public class PermissionManager {
     /**
      * @see PermissionsStorage#get(String)
      */
-    public Set<Permissions> get(String user, String domain) throws ServerException {
+    public List<Permissions> get(String user, String domain) throws ServerException {
         return domainToStorage.get(domain).get(user, domain);
     }
 

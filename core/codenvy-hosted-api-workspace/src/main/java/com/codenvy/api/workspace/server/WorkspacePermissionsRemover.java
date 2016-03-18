@@ -31,7 +31,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Removes permissions related to workspace when it was removed
@@ -53,7 +53,7 @@ public class WorkspacePermissionsRemover implements EventSubscriber<WorkspaceRem
 
     @Override
     public void onEvent(WorkspaceRemovedEvent event) {
-        final Set<Permissions> permissions;
+        final List<Permissions> permissions;
         try {
             permissions = permissionManager.getByInstance(WorkspaceDomain.DOMAIN_ID, event.getWorkspaceId());
         } catch (ServerException e) {

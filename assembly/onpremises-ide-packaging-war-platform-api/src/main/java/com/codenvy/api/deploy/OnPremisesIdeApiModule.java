@@ -25,9 +25,9 @@ import com.codenvy.api.dao.mongo.RecipeDaoImpl;
 import com.codenvy.api.dao.mongo.WorkspaceDaoImpl;
 import com.codenvy.api.dao.util.ProfileMigrator;
 import com.codenvy.api.factory.FactoryMongoDatabaseProvider;
-import com.codenvy.api.permission.server.PermissionTokenHandler;
-import com.codenvy.api.permission.server.PermissionCheckerImpl;
 import com.codenvy.api.permission.server.PermissionChecker;
+import com.codenvy.api.permission.server.PermissionCheckerImpl;
+import com.codenvy.api.permission.server.PermissionTokenHandler;
 import com.codenvy.api.permission.server.PermissionsModule;
 import com.codenvy.api.user.server.AdminUserService;
 import com.codenvy.api.user.server.dao.AdminUserDao;
@@ -119,6 +119,9 @@ public class OnPremisesIdeApiModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new PermissionsModule());
+        install(new WorkspaceApiModule());
+
         bind(ApiInfoService.class);
         bind(ProjectTemplateRegistry.class);
         bind(ProjectTemplateDescriptionLoader.class).asEagerSingleton();
@@ -172,7 +175,6 @@ public class OnPremisesIdeApiModule extends AbstractModule {
 
         bind(MongoDatabase.class).annotatedWith(Names.named("mongo.db.factory"))
                                  .toProvider(FactoryMongoDatabaseProvider.class);
-
 
 
         bind(org.eclipse.che.api.factory.server.FactoryStore.class).to(com.codenvy.factory.storage.mongo.MongoDBFactoryStore.class);
@@ -280,7 +282,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
                         ),
                         new UriStartFromRequestFilter("/api/user/settings")
                 )
-                                            );
+        );
 
 
         bindConstant().annotatedWith(Names.named("notification.server.propagate_events")).to("vfs,workspace");

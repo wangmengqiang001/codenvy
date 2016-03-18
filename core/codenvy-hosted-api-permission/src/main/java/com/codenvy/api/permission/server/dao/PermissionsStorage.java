@@ -20,6 +20,7 @@ import com.codenvy.api.permission.server.PermissionsDomain;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.ServerException;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -53,7 +54,7 @@ public interface PermissionsStorage {
      *         user id
      * @return set of permissions
      */
-    Set<Permissions> get(String user) throws ServerException;
+    List<Permissions> get(String user) throws ServerException;
 
     /**
      * @param user
@@ -62,7 +63,7 @@ public interface PermissionsStorage {
      *         domain id
      * @return set of permissions
      */
-    Set<Permissions> get(String user, String domain) throws ServerException;
+    List<Permissions> get(String user, String domain) throws ServerException;
 
     /**
      * @param user
@@ -82,7 +83,7 @@ public interface PermissionsStorage {
      *         instance id
      * @return set of permissions
      */
-    Set<Permissions> getByInstance(String domain, String instance) throws ServerException;
+    List<Permissions> getByInstance(String domain, String instance) throws ServerException;
 
     /**
      * @param user

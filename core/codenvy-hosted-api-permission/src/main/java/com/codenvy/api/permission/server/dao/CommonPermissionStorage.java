@@ -30,8 +30,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -136,21 +138,21 @@ public class CommonPermissionStorage implements PermissionsStorage {
     }
 
     @Override
-    public Set<Permissions> get(String user) throws ServerException {
+    public List<Permissions> get(String user) throws ServerException {
         try {
             return collection.find(eq("user", user))
-                             .into(new HashSet<>());
+                             .into(new ArrayList<>());
         } catch (MongoException e) {
             throw new ServerException(e.getMessage(), e);
         }
     }
 
     @Override
-    public Set<Permissions> get(String user, String domain) throws ServerException {
+    public List<Permissions> get(String user, String domain) throws ServerException {
         try {
             return collection.find(and(eq("user", user),
                                        eq("domain", domain)))
-                             .into(new HashSet<>());
+                             .into(new ArrayList<>());
         } catch (MongoException e) {
             throw new ServerException(e.getMessage(), e);
         }
@@ -177,11 +179,11 @@ public class CommonPermissionStorage implements PermissionsStorage {
     }
 
     @Override
-    public Set<Permissions> getByInstance(String domain, String instance) throws ServerException {
+    public List<Permissions> getByInstance(String domain, String instance) throws ServerException {
         try {
             return collection.find(and(eq("domain", domain),
                                        eq("instance", instance)))
-                             .into(new HashSet<>());
+                             .into(new ArrayList<>());
         } catch (MongoException e) {
             throw new ServerException(e.getMessage(), e);
         }

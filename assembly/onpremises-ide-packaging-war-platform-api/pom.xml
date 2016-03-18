@@ -15,7 +15,8 @@
     from Codenvy S.A..
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>onpremises-ide-parent</artifactId>
@@ -24,7 +25,7 @@
     </parent>
     <artifactId>onpremises-ide-packaging-war-platform-api</artifactId>
     <packaging>war</packaging>
-    <name>Onpremises IDE :: WAR    :: API</name>
+    <name>Onpremises IDE :: WAR :: API</name>
     <dependencies>
         <dependency>
             <groupId>aopalliance</groupId>
@@ -180,10 +181,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-api-infrastructure-local</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-machine</artifactId>
         </dependency>
         <dependency>
@@ -329,12 +326,14 @@
                         </goals>
                         <configuration>
                             <target>
-                                <unzip dest="${project.build.directory}/packager-conf/jar/org.eclipse.jdt.core" src="${project.build.directory}/packager-conf/jar/org.eclipse.jdt.core.jar">
+                                <unzip dest="${project.build.directory}/packager-conf/jar/org.eclipse.jdt.core"
+                                       src="${project.build.directory}/packager-conf/jar/org.eclipse.jdt.core.jar">
                                     <patternset>
-                                        <exclude name="**/META-INF/**" />
+                                        <exclude name="**/META-INF/**"/>
                                     </patternset>
                                 </unzip>
-                                <jar basedir="${project.build.directory}/packager-conf/jar/org.eclipse.jdt.core" destfile="${project.build.directory}/packager-conf/jar-repack/org.eclipse.jdt.core-3.9.0.v20130604-1421-repack.jar" />
+                                <jar basedir="${project.build.directory}/packager-conf/jar/org.eclipse.jdt.core"
+                                     destfile="${project.build.directory}/packager-conf/jar-repack/org.eclipse.jdt.core-3.9.0.v20130604-1421-repack.jar"/>
                             </target>
                         </configuration>
                     </execution>
@@ -346,11 +345,13 @@
                         </goals>
                         <configuration>
                             <tasks>
-                                <unzip dest="${project.build.directory}/unzip/odyssey" src="${project.build.directory}/dependency/odyssey-${odyssey.classifier}.zip" />
+                                <unzip dest="${project.build.directory}/unzip/odyssey"
+                                       src="${project.build.directory}/dependency/odyssey-${odyssey.classifier}.zip"/>
                                 <copy todir="${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/classes/email-templates">
-                                    <fileset dir="${project.build.directory}/unzip/odyssey/site/email-templates" />
+                                    <fileset dir="${project.build.directory}/unzip/odyssey/site/email-templates"/>
                                 </copy>
-                                <copy file="${project.build.directory}/unzip/odyssey/site/images/mail/header.png" todir="${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/classes/email-templates" />
+                                <copy file="${project.build.directory}/unzip/odyssey/site/images/mail/header.png"
+                                      todir="${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/classes/email-templates"/>
                             </tasks>
                         </configuration>
                     </execution>
@@ -405,7 +406,8 @@
                             <targetPath>WEB-INF/lib</targetPath>
                         </resource>
                     </webResources>
-                    <packagingExcludes>WEB-INF/lib/*gwt*.jar,WEB-INF/lib/gin-*.jar,WEB-INF/lib/*codemirror-resources*.jar</packagingExcludes>
+                    <packagingExcludes>WEB-INF/lib/*gwt*.jar,WEB-INF/lib/gin-*.jar,WEB-INF/lib/*codemirror-resources*.jar
+                    </packagingExcludes>
                     <archiveClasses>true</archiveClasses>
                 </configuration>
             </plugin>
