@@ -14,7 +14,6 @@
  */
 package com.codenvy.ext.java.server;
 
-
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.ServletModule;
@@ -61,7 +60,7 @@ public class MachineServletModule extends ServletModule {
         filter("/*").through(CorsFilter.class, corsFilterParams);
         //servlets
         install(new com.codenvy.auth.sso.client.deploy.SsoClientServletModule());
-        serveRegex("^/ext((?!(/(ws|eventbus)($|/.*)))/.*)").with(org.everrest.guice.servlet.GuiceEverrestServlet.class);
+        serveRegex("^/[^/]+/ext((?!(/(ws|eventbus)($|/.*)))/.*)").with(org.everrest.guice.servlet.GuiceEverrestServlet.class);
 
         bind(io.swagger.jaxrs.config.DefaultJaxrsConfig.class).asEagerSingleton();
         serve("/swaggerinit").with(io.swagger.jaxrs.config.DefaultJaxrsConfig.class, ImmutableMap

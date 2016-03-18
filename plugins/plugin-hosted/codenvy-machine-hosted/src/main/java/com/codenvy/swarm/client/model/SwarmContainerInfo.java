@@ -12,7 +12,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.swarm.client.json;
+package com.codenvy.swarm.client.model;
 
 import org.eclipse.che.plugin.docker.client.json.ContainerInfo;
 

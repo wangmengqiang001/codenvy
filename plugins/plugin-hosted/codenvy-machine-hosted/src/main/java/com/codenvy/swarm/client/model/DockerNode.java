@@ -12,28 +12,29 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.swarm.client;
-
-import com.codenvy.swarm.client.json.DockerNode;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Random;
+package com.codenvy.swarm.client.model;
 
 /**
- * Random selection strategy for Swarm connector.
+ * Represents node where docker runs.
+ * Used for workarounds because of not implemented APIs in Swarm
  *
  * @author Eugene Voevodin
  */
-public class RandomNodeSelectionStrategy implements NodeSelectionStrategy {
+public class DockerNode {
+    //TODO add ram and containers ?
+    private final String hostname;
+    private final String addr;
 
-    private static final Random random = new Random();
+    public DockerNode(String hostname, String addr) {
+        this.hostname = hostname;
+        this.addr = addr;
+    }
 
-    @Override
-    public DockerNode select(List<DockerNode> uris) throws IOException {
-        if (uris.size() == 0) {
-            throw new IOException("No docker nodes available");
-        }
-        return uris.get(random.nextInt(uris.size()));
+    public String getAddr() {
+        return addr;
+    }
+
+    public String getHostname() {
+        return hostname;
     }
 }

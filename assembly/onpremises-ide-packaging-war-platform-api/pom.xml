@@ -103,14 +103,6 @@
             <artifactId>codenvy-plugin-wso2-oauth2</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.codenvy.plugin</groupId>
-            <artifactId>codenvy-router-machine</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.plugin</groupId>
-            <artifactId>codenvy-swarm-machine</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>

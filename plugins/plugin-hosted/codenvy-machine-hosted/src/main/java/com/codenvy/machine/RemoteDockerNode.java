@@ -16,7 +16,7 @@ package com.codenvy.machine;
 
 import com.codenvy.machine.backup.MachineBackupManager;
 import com.codenvy.swarm.client.SwarmDockerConnector;
-import com.codenvy.swarm.client.json.SwarmContainerInfo;
+import com.codenvy.swarm.client.model.SwarmContainerInfo;
 import com.google.inject.assistedinject.Assisted;
 
 import org.eclipse.che.api.core.ServerException;
