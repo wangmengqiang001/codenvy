@@ -19,6 +19,8 @@ import org.eclipse.che.api.core.ServerException;
 import javax.inject.Inject;
 
 /**
+ * Implementation of {@link PermissionChecker} that use {@link PermissionManager} for checking
+ *
  * @author Sergii Leschenko
  */
 public class PermissionCheckerImpl implements PermissionChecker {

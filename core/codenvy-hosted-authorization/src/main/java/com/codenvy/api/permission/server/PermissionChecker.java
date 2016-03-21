@@ -17,6 +17,8 @@ package com.codenvy.api.permission.server;
 import org.eclipse.che.api.core.ServerException;
 
 /**
+ * Checks user's permission to perform some action with particular instance of given domain
+ *
  * @author Sergii Leschenko
  */
 public interface PermissionChecker {

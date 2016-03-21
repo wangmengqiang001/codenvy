@@ -73,7 +73,7 @@ public class WorkspaceOwnerPermissionsProvider implements EventSubscriber<Worksp
                                                                     .map(WorkspaceDomain.WorkspaceActions::toString)
                                                                     .collect(Collectors.toList())));
         } catch (ServerException e) {
-            LOG.error("Can't add user's permissions for workspace", e);
+            LOG.error("Can't add owner's permissions for workspace with id '" + event.getWorkspace().getId() + "'", e);
         }
     }
 }

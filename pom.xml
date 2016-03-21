@@ -130,7 +130,7 @@
             <dependency>
                 <groupId>com.codenvy.hosted-infrastructure</groupId>
                 <artifactId>codenvy-hosted-api-permission</artifactId>
-                <version>${codenvy.hosted-infrastructure.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.codenvy.hosted-infrastructure</groupId>
@@ -140,12 +140,12 @@
             <dependency>
                 <groupId>com.codenvy.hosted-infrastructure</groupId>
                 <artifactId>codenvy-hosted-api-workspace</artifactId>
-                <version>${codenvy.hosted-infrastructure.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.codenvy.hosted-infrastructure</groupId>
                 <artifactId>codenvy-hosted-authorization</artifactId>
-                <version>${codenvy.hosted-infrastructure.version}</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.codenvy.hosted-infrastructure</groupId>

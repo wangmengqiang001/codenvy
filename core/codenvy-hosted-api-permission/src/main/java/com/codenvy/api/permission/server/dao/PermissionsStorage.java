@@ -17,6 +17,7 @@ package com.codenvy.api.permission.server.dao;
 import com.codenvy.api.permission.server.Permissions;
 import com.codenvy.api.permission.server.PermissionsDomain;
 
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.ServerException;
 
@@ -109,5 +110,5 @@ public interface PermissionsStorage {
      *         instance id
      */
     void remove(String user, String domain, String instance) throws ServerException,
-                                                                    ForbiddenException;
+                                                                    ConflictException;
 }

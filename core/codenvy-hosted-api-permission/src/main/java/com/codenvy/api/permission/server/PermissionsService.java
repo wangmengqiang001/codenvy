@@ -15,8 +15,10 @@
 package com.codenvy.api.permission.server;
 
 import com.codenvy.api.permission.shared.dto.PermissionsDTO;
+import com.google.common.base.Strings;
 
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -37,6 +39,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
@@ -82,7 +85,13 @@ public class PermissionsService extends Service {
      */
     @POST
     @Consumes(APPLICATION_JSON)
-    public void storePermissions(PermissionsDTO permissionsDto) throws ServerException {
+    public void storePermissions(PermissionsDTO permissionsDto) throws ServerException, BadRequestException {
+        checkArgument(permissionsDto != null, "Permissions descriptor required");
+        checkArgument(!isNullOrEmpty(permissionsDto.getUser()), "User required");
+        checkArgument(!isNullOrEmpty(permissionsDto.getDomain()), "Domain required");
+        checkArgument(!isNullOrEmpty(permissionsDto.getInstance()), "Instance required");
+        checkArgument(!permissionsDto.getActions().isEmpty(), "One or more actions required");
+
         permissionManager.storePermission(new Permissions(permissionsDto.getUser(),
                                                           permissionsDto.getDomain(),
                                                           permissionsDto.getInstance(),
@@ -145,8 +154,13 @@ public class PermissionsService extends Service {
     @Path("/{domain}/{instance}/{user}")
     public void removePermissions(@PathParam("domain") String domain,
                                   @PathParam("instance") String instance,
-                                  @PathParam("user") String user)
-            throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
+                                  @PathParam("user") String user) throws ConflictException, ServerException {
         permissionManager.remove(user, domain, instance);
+    }
+
+    private void checkArgument(boolean expression, String message) throws BadRequestException {
+        if (!expression) {
+            throw new BadRequestException(message);
+        }
     }
 }

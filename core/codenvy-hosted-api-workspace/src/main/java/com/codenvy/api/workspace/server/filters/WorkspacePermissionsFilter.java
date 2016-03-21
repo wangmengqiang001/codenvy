@@ -54,8 +54,7 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
     }
 
     @Override
-    public void filter(GenericMethodResource genericMethodResource, Object[] arguments)
-            throws UnauthorizedException, ForbiddenException, ServerException {
+    public void filter(GenericMethodResource genericMethodResource, Object[] arguments) throws ForbiddenException, ServerException {
 
         final Method method = genericMethodResource.getMethod();
         final String methodName = method.getName();

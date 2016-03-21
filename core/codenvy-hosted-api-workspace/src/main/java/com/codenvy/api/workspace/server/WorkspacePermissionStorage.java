@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import com.mongodb.client.MongoDatabase;
 
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -52,7 +53,7 @@ public class WorkspacePermissionStorage extends CommonPermissionStorage {
     }
 
     @Override
-    public void remove(String user, String domain, String instance) throws ServerException, ForbiddenException {
+    public void remove(String user, String domain, String instance) throws ServerException, ConflictException {
         if (!WorkspaceDomain.DOMAIN_ID.equals(domain)) {
             throw new IllegalArgumentException("Unsupported domain");
         }
@@ -60,7 +61,7 @@ public class WorkspacePermissionStorage extends CommonPermissionStorage {
         try {
             final UsersWorkspaceImpl workspace = workspaceManager.getWorkspace(instance);
             if (workspace.getOwner().equals(user)) {
-                throw new ForbiddenException("Permissions for creator can't be removed");
+                throw new ConflictException("Permissions for creator can't be removed");
             }
         } catch (NotFoundException e) {
             //allow to remove permissions of owner to non existent workspace

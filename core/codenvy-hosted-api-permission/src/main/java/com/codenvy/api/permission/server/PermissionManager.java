@@ -17,6 +17,7 @@ package com.codenvy.api.permission.server;
 import com.codenvy.api.permission.server.dao.PermissionsStorage;
 
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -97,8 +98,7 @@ public class PermissionManager {
     /**
      * @see PermissionsStorage#remove(String, String, String)
      */
-    public void remove(String user, String domain, String instance)
-            throws BadRequestException, ForbiddenException, NotFoundException, ServerException {
+    public void remove(String user, String domain, String instance) throws ConflictException, ServerException {
         domainToStorage.get(domain).remove(user, domain, instance);
     }
 

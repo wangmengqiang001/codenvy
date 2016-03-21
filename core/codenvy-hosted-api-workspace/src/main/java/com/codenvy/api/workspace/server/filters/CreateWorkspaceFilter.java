@@ -27,14 +27,15 @@ import org.everrest.core.resource.GenericMethodResource;
 import javax.ws.rs.Path;
 
 /**
+ * Forbids create workspace linked to account if user doesn't have createWorkspaces permission there
+ *
  * @author Sergii Leschenko
  */
 @Filter
 @Path("/workspace")
 public class CreateWorkspaceFilter extends CheMethodInvokerFilter {
     @Override
-    public void filter(GenericMethodResource genericMethodResource, Object[] arguments)
-            throws UnauthorizedException, ForbiddenException, ServerException {
+    public void filter(GenericMethodResource genericMethodResource, Object[] arguments) throws ForbiddenException {
         final String methodName = genericMethodResource.getMethod().getName();
         if (methodName.equals("create")) {
             final String accountId = ((String)arguments[1]);

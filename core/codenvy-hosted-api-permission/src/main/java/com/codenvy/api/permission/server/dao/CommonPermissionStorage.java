@@ -23,6 +23,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.UpdateOptions;
 
 import org.bson.Document;
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.ServerException;
 
@@ -126,8 +127,7 @@ public class CommonPermissionStorage implements PermissionsStorage {
     }
 
     @Override
-    public void remove(String user, String domain, String instance) throws ServerException,
-                                                                           ForbiddenException {
+    public void remove(String user, String domain, String instance) throws ServerException, ConflictException {
         try {
             collection.deleteOne(and(eq("user", user),
                                      eq("domain", domain),

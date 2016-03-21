@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.ws.rs.core.UriBuilder;
 import java.util.HashSet;
 import java.util.Objects;
@@ -31,8 +32,13 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Implementation of {@link PermissionChecker} that load permissions by http requests to {@link PermissionsService}
+ *
+ * <p>It also caches permissions to avoid frequently requests to workspace master.
+ *
  * @author Sergii Leschenko
  */
+@Singleton
 public class RemotePermissionChecker implements PermissionChecker {
     private static final Logger LOG = LoggerFactory.getLogger(RemotePermissionChecker.class);
 
@@ -41,8 +47,8 @@ public class RemotePermissionChecker implements PermissionChecker {
     @Inject
     public RemotePermissionChecker(@Named("api.endpoint") String apiEndpoint,
                                    HttpJsonRequestFactory requestFactory) {
+        //TODO mb make configurable size of cache and expiration time
         this.permissionsCache = CacheBuilder.newBuilder()
-                                            //TODO mb make it configurable
                                             .maximumSize(1000)
                                             .expireAfterWrite(1, TimeUnit.MINUTES)
                                             .build(new CacheLoader<Key, Set<String>>() {
@@ -51,7 +57,7 @@ public class RemotePermissionChecker implements PermissionChecker {
                                                     final String getCurrentUsersPermissions = UriBuilder.fromUri(apiEndpoint)
                                                                                                         .path(PermissionsService.class)
                                                                                                         .path(PermissionsService.class,
-                                                                                                              "getCurrentUsersPermissions")
+                                                                                                              "getUsersPermissions")
                                                                                                         .build(key.domain, key.instance)
                                                                                                         .toString();
                                                     return new HashSet<>(requestFactory.fromUrl(getCurrentUsersPermissions)
@@ -67,6 +73,7 @@ public class RemotePermissionChecker implements PermissionChecker {
         try {
             return permissionsCache.get(new Key(user, domain, instance)).contains(action);
         } catch (Exception e) {
+            //TODO Think about throwing runtime exception here or add ServerException to hasPermissions method of User
             LOG.error("Can't load users permissions", e);
             return false;
         }

@@ -18,6 +18,7 @@ import com.codenvy.api.permission.server.PermissionManager;
 import com.codenvy.api.permission.server.Permissions;
 
 import org.eclipse.che.api.core.BadRequestException;
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
@@ -64,7 +65,7 @@ public class WorkspacePermissionsRemover implements EventSubscriber<WorkspaceRem
         for (Permissions permission : permissions) {
             try {
                 permissionManager.remove(permission.getUser(), permission.getDomain(), permission.getInstance());
-            } catch (BadRequestException | ForbiddenException | NotFoundException | ServerException e) {
+            } catch (ConflictException | ServerException e) {
                 LOG.error("Can't remove user's permissions to workspace", e);
             }
         }
