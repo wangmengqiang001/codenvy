@@ -14,15 +14,20 @@
  */
 'use strict';
 
-import {ImsApiConfig} from './ims/imsapi-config';
-import {CodenvyApiConfig} from './api/codenvy-api-config';
-import {WidgetConfig} from './widget/widget-config';
+/**
+ * Defines a directive for creating top banner.
+ * @author Ann Shumilova
+ */
+export class CodenvyBanner {
 
-export class CodenvyComponentsConfig {
-
-  constructor(register) {
-    new ImsApiConfig(register);
-    new CodenvyApiConfig(register);
-    new WidgetConfig(register);
+  /**
+   * Default constructor that is using resource
+   * @ngInject for Dependency injection
+   */
+  constructor () {
+    this.restrict='E';
+    this.replace = false;
+    this.templateUrl = 'components/widget/banner/codenvy-banner.html';
   }
+
 }

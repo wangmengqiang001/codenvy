@@ -14,15 +14,11 @@
  */
 'use strict';
 
-import {ImsApiConfig} from './ims/imsapi-config';
-import {CodenvyApiConfig} from './api/codenvy-api-config';
-import {WidgetConfig} from './widget/widget-config';
+import {CodenvyBanner} from './banner/codenvy-banner.directive';
 
-export class CodenvyComponentsConfig {
+export class WidgetConfig {
 
   constructor(register) {
-    new ImsApiConfig(register);
-    new CodenvyApiConfig(register);
-    new WidgetConfig(register);
+    register.directive('codenvyBanner', CodenvyBanner);
   }
 }

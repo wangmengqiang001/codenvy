@@ -32,7 +32,7 @@ export class LoginCtrl {
 
     // hide the navbar
     angular.element('#codenvynavbar').hide();
-
+    angular.element('#codenvyfooter').hide();
   }
 
 
