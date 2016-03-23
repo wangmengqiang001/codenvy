@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,6 +52,7 @@ public class WorkspaceFsBackupScheduler {
     private final MachineBackupManager backupManager;
 
     private final Map<String, Long> lastMachineSynchronizationTime;
+    private final Set<String>       pendingMachineSyncs;
     private final ExecutorService   executor;
 
     @Inject
@@ -63,6 +65,7 @@ public class WorkspaceFsBackupScheduler {
 
         this.executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("MachineFsBackupScheduler-%s").build());
         this.lastMachineSynchronizationTime = new ConcurrentHashMap<>();
+        this.pendingMachineSyncs = ConcurrentHashMap.newKeySet();
     }
 
     @ScheduleRate(initialDelay = 1, period = 1, unit = TimeUnit.MINUTES)
@@ -75,15 +78,19 @@ public class WorkspaceFsBackupScheduler {
                     machine.getStatus() == MachineStatus.RUNNING &&
                     isTimeToBackup(machineId)) {
 
-                    executor.execute(() -> {
-                        try {
-                            backupWorkspaceInMachine(machine);
+                    if (pendingMachineSyncs.add(machineId)) {
+                        executor.execute(() -> {
+                            try {
+                                backupWorkspaceInMachine(machine);
 
-                            lastMachineSynchronizationTime.put(machine.getId(), System.currentTimeMillis());
-                        } catch (ServerException | NotFoundException e) {
-                            LOG.error(e.getLocalizedMessage(), e);
-                        }
-                    });
+                                lastMachineSynchronizationTime.put(machine.getId(), System.currentTimeMillis());
+                            } catch (ServerException | NotFoundException e) {
+                                LOG.error(e.getLocalizedMessage(), e);
+                            } finally {
+                                pendingMachineSyncs.remove(machineId);
+                            }
+                        });
+                    }
                 }
             }
         } catch (ServerException e) {

@@ -44,6 +44,7 @@ import java.util.List;
 import static java.util.Collections.singletonMap;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -273,7 +274,7 @@ public class WorkspaceFsBackupSchedulerTest {
     }
 
     @Test
-    public void shouldBackupMachineFsIfLastSyncTimeoutIsExpired() throws Exception {
+    public void shouldBackupMachineFsIfLastSyncIsFinishedAndTimeoutIsExpired() throws Exception {
         // given
         machines.clear();
         machines.add(machine1);
@@ -281,6 +282,8 @@ public class WorkspaceFsBackupSchedulerTest {
         doNothing().when(scheduler).backupWorkspaceInMachine(any(MachineImpl.class));
 
         scheduler.scheduleBackup();
+
+        verify(scheduler, timeout(2000)).backupWorkspaceInMachine(eq(machine1));
 
         // when
         // second synchronization
@@ -291,5 +294,27 @@ public class WorkspaceFsBackupSchedulerTest {
         verify(scheduler, timeout(2000).times(2)).backupWorkspaceInMachine(eq(machine1));
     }
 
+    @Test
+    public void shouldNotBackupMachineFsIfAnotherSyncIsInProgress() throws Exception {
+        // given
+        machines.clear();
+        machines.add(machine1);
+        scheduler = spy(new WorkspaceFsBackupScheduler(machineManager, backupManager, 0));
+        doAnswer(invocation -> {
+            Thread.sleep(1000);
+
+            return null;
+        }).when(scheduler).backupWorkspaceInMachine(any(MachineImpl.class));
+
+        scheduler.scheduleBackup();
+
+        // when
+        // second synchronization
+        scheduler.scheduleBackup();
+
+        // then
+        verify(machineManager, times(2)).getMachines();
+        verify(scheduler, timeout(2000)).backupWorkspaceInMachine(eq(machine1));
+    }
 }
 
