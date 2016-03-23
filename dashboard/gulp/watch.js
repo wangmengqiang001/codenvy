@@ -27,7 +27,9 @@ gulp.task('watch', ['scripts:watch', 'inject'], function () {
 
   gulp.watch([
     path.join(conf.paths.src, '/app/**/*.css'),
-    path.join(conf.paths.src, '/app/**/*.styl')
+    path.join(conf.paths.src, '/app/**/*.styl'),
+    path.join(conf.paths.src, '/components/**/*.css'),
+    path.join(conf.paths.src, '/components/**/*.styl')
   ], function(event) {
     if(isOnlyChange(event)) {
       gulp.start('styles');
@@ -37,7 +39,10 @@ gulp.task('watch', ['scripts:watch', 'inject'], function () {
   });
 
 
-  gulp.watch(path.join(conf.paths.src, '/app/**/*.html'), function(event) {
+  gulp.watch([
+      path.join(conf.paths.src, '/app/**/*.html'),
+      path.join(conf.paths.src, '/components/**/*.html')
+    ], function(event) {
     browserSync.reload(event.path);
   });
 });
