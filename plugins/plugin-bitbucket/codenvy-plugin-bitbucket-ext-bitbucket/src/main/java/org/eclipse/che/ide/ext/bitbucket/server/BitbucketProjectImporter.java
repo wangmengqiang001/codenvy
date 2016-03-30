@@ -14,12 +14,12 @@
  */
 package org.eclipse.che.ide.ext.bitbucket.server;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.git.GitConnectionFactory;
 import org.eclipse.che.api.git.GitProjectImporter;
-import org.eclipse.che.vfs.impl.fs.LocalPathResolver;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 import javax.validation.constraints.NotNull;
 
@@ -32,9 +32,8 @@ import javax.validation.constraints.NotNull;
 public class BitbucketProjectImporter extends GitProjectImporter {
     @Inject
     public BitbucketProjectImporter(@NotNull final GitConnectionFactory gitConnectionFactory,
-                                    @NotNull final LocalPathResolver localPathResolver,
                                     EventService eventService) {
-        super(gitConnectionFactory, localPathResolver, eventService);
+        super(gitConnectionFactory, eventService);
     }
 
     @Override

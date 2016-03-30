@@ -14,12 +14,12 @@
  */
 package com.codenvy.ide.profile.client.action;
 
-import org.eclipse.che.api.analytics.client.logger.AnalyticsEventLogger;
-import org.eclipse.che.ide.api.action.Action;
-import org.eclipse.che.ide.api.action.ActionEvent;
 import com.codenvy.ide.profile.client.ProfileLocalizationConstant;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
+
+import org.eclipse.che.ide.api.action.Action;
+import org.eclipse.che.ide.api.action.ActionEvent;
 
 /**
  * Open a new dashboard window with account information
@@ -27,22 +27,17 @@ import com.google.inject.Inject;
  * @author Oleksii Orel
  */
 public class RedirectToDashboardAccountAction extends Action {
-
-    private final AnalyticsEventLogger     eventLogger;
     private final ProfileLocalizationConstant locale;
 
     @Inject
-    public RedirectToDashboardAccountAction(ProfileLocalizationConstant locale,
-                                            AnalyticsEventLogger eventLogger) {
+    public RedirectToDashboardAccountAction(ProfileLocalizationConstant locale) {
         super(locale.redirectToDashboardAccountTitle(), locale.redirectToDashboardAccountDescription(), null, null);
-        this.eventLogger = eventLogger;
         this.locale = locale;
     }
 
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent e) {
-        eventLogger.log(this);
         Window.open(locale.redirectToDashboardAccountUrl(), "_blank", "");
     }
 }

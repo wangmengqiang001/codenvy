@@ -26,14 +26,13 @@ export class CodenvyFactory {
    * Default constructor that is using resource
    * @ngInject for Dependency injection
    */
-  constructor($resource, $q, cheUser, lodash, codenvyAnalytics) {
+  constructor($resource, $q, cheUser, lodash) {
     // keep resource
     this.$resource = $resource;
     this.$q = $q;
 
     this.cheUser = cheUser;
     this.lodash = lodash;
-    this.codenvyAnalytics = codenvyAnalytics;
 
     this.factories = [];
     this.factoriesById = new Map();
@@ -157,7 +156,6 @@ export class CodenvyFactory {
         deferred.resolve(tmpFactory);
         return;
       }
-
       //set default fields
       if (!tmpFactory.name) {
         tmpFactory.name = '';
@@ -165,12 +163,10 @@ export class CodenvyFactory {
 
       let seeLink = this.detectLinks(tmpFactory);
 
-      let findFactory = this.factoriesById.get(factoryId);
       let factory = {
         originFactory: tmpFactory,
         idURL: seeLink[0],
-        nameURL: seeLink[1],
-        views: findFactory && findFactory.views ? findFactory.views : 0
+        nameURL: seeLink[1]
       };
 
       //update factories map
@@ -181,27 +177,10 @@ export class CodenvyFactory {
         this.factories.push(value);
       });
 
-      let viewsPromise = this.codenvyAnalytics.getFactoryUsedFromId(tmpFactory.id);
-
-      viewsPromise.then((factoryUsed) => {
-        factory.views = parseInt(factoryUsed.value);
-        deferred.resolve(factory);
-      }, (error) => {
-        if (error.status === 304) {
-          deferred.resolve(factory);
-        } else {
-          deferred.reject(error);
-        }
-      });
+      deferred.resolve(factory);
     }, (error) => {
       if (error.status === 304) {
         let findFactory = this.factoriesById.get(factoryId);
-        if (findFactory) {
-          let viewsPromise = this.codenvyAnalytics.getFactoryUsedFromId(factoryId);
-          viewsPromise.then((factoryUsed) => {
-            findFactory.views = parseInt(factoryUsed.value);
-          });
-        }
         deferred.resolve(findFactory);
       } else {
         deferred.reject(error);

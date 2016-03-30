@@ -14,7 +14,7 @@
  */
 package org.eclipse.che.ide.ext.bitbucket.server.inject;
 
-import org.eclipse.che.api.project.server.ProjectImporter;
+import org.eclipse.che.api.project.server.importer.ProjectImporter;
 import org.eclipse.che.git.impl.nativegit.ssh.SshKeyUploader;
 import org.eclipse.che.ide.ext.bitbucket.server.Bitbucket;
 import org.eclipse.che.ide.ext.bitbucket.server.BitbucketKeyUploader;

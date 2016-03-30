@@ -71,14 +71,14 @@ public interface WorkItemCreationResource {
     /**
      * Get resource links.
      *
-     * @return {@link Links} links
+     * @return {@link PullRequestUpdatedResourceLinks} links
      */
     @JsonFieldName(LINKS_FIELD)
-    Links getLinks();
+    PullRequestUpdatedResourceLinks getLinks();
 
-    void setLinks(final Links links);
+    void setLinks(final PullRequestUpdatedResourceLinks links);
 
-    WorkItemCreationResource withLinks(final Links links);
+    WorkItemCreationResource withLinks(final PullRequestUpdatedResourceLinks links);
 
     /**
      * Get resource url.

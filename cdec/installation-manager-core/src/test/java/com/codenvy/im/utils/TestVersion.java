@@ -44,6 +44,8 @@ public class TestVersion {
                                {"0.9.0"},
                                {"1.0.0"},
                                {"1.0.10"},
+                               {"1.0.1-GA"},
+                               {"1.0.1-GA-SNAPSHOT"},
                                {"1.0.1-SNAPSHOT"},
                                {"1.0.1-RC10-SNAPSHOT"},
                                {"1.0.1.0-SNAPSHOT"},
@@ -73,6 +75,7 @@ public class TestVersion {
                                {"01.1.1"},
                                {"1.1.01"},
                                {"1.0.1-"},
+                               {"1.0.1-GA1"},
                                {"1.0.1-M"},
                                {"1.0.1-M0"},
                                {"1.0.1-M-SNAPSHOT"},
@@ -94,25 +97,28 @@ public class TestVersion {
                                       int milestone,
                                       int beta,
                                       int rc,
-                                      boolean snapshot) throws Exception {
-        assertEquals(Version.valueOf(str), new Version(major, minor, bugFix, hotFix, milestone, beta, rc, snapshot));
+                                      boolean isGa,
+                                      boolean isSnapshot) throws Exception {
+        assertEquals(Version.valueOf(str), new Version(major, minor, bugFix, hotFix, milestone, beta, rc, isGa, isSnapshot));
     }
 
 
     @DataProvider(name = "testParseValidVersion")
     public Object[][] testParseValidVersion() {
         return new Object[][] {
-                {"1.0.1-RC1", 1, 0, 1, 0, 0, 0, 1, false},
-                {"1.0.1.0", 1, 0, 1, 0, 0, 0, 0, false},
-                {"10.150.200.1", 10, 150, 200, 1, 0, 0, 0, false},
-                {"10.150.200.24-SNAPSHOT", 10, 150, 200, 24, 0, 0, 0, true},
-                {"10.150.200-M20", 10, 150, 200, 0, 20, 0, 0, false},
-                {"10.150.200-M20-RC3", 10, 150, 200, 0, 20, 0, 3, false},
-                {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 0, 20, 0, 0, true},
-                {"10.150.200-beta-10", 10, 150, 200, 0, 0, 10, 0, false},
-                {"10.150.200-beta-1-SNAPSHOT", 10, 150, 200, 0, 0, 1, 0, true},
-                {"10.150.200-RC1", 10, 150, 200, 0, 0, 0, 1, false},
-                {"10.150.200-RC11-SNAPSHOT", 10, 150, 200, 0, 0, 0, 11, true}};
+                {"1.0.1-RC1", 1, 0, 1, 0, 0, 0, 1, false, false},
+                {"1.0.1.0", 1, 0, 1, 0, 0, 0, 0, false, false},
+                {"10.150.200.1", 10, 150, 200, 1, 0, 0, 0, false, false},
+                {"10.150.200.24-SNAPSHOT", 10, 150, 200, 24, 0, 0, 0, false, true},
+                {"10.150.200-M20", 10, 150, 200, 0, 20, 0, 0, false, false},
+                {"10.150.200-M20-RC3", 10, 150, 200, 0, 20, 0, 3, false, false},
+                {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 0, 20, 0, 0, false, true},
+                {"10.150.200-beta-10", 10, 150, 200, 0, 0, 10, 0, false, false},
+                {"10.150.200-beta-1-SNAPSHOT", 10, 150, 200, 0, 0, 1, 0, false, true},
+                {"10.150.200-RC1", 10, 150, 200, 0, 0, 0, 1, false, false},
+                {"10.150.200-RC11-SNAPSHOT", 10, 150, 200, 0, 0, 0, 11, false, true},
+                {"10.150.200.1-GA", 10, 150, 200, 1, 0, 0, 0, true, false},
+                {"10.150.200.24-GA-SNAPSHOT", 10, 150, 200, 24, 0, 0, 0, true, true}};
     }
 
 
@@ -131,6 +137,8 @@ public class TestVersion {
         return new Object[][] {
                 {"10.150.200"},
                 {"10.150.200.1"},
+                {"10.150.200.1-GA"},
+                {"10.150.200.1-GA-SNAPSHOT"},
                 {"10.150.200-M20-SNAPSHOT"},
                 {"10.150.200.20-M20-SNAPSHOT"},
                 {"10.150.200-M20"},
@@ -154,6 +162,7 @@ public class TestVersion {
                 {"1.0.2-M20-SNAPSHOT", "1.0.2-M20-SNAPSHOT", 0},
                 {"1.0.2.4-M20-SNAPSHOT", "1.0.2.4-M20-SNAPSHOT", 0},
                 {"1.0.2.4-RC1-SNAPSHOT", "1.0.2.4-RC1-SNAPSHOT", 0},
+                {"1.0.2.4-GA-SNAPSHOT", "1.0.2.4-GA-SNAPSHOT", 0},
                 {"1.0.2-SNAPSHOT", "1.0.2-SNAPSHOT", 0},
 
                 {"4.0.1", "0.4.0", 1},
@@ -165,6 +174,14 @@ public class TestVersion {
                 {"1.0.2", "1.0.1-RC1", 1},
                 {"1.0.2", "1.0.1-M20", 1},
                 {"1.0.2", "1.0.2-SNAPSHOT", 1},
+                {"1.0.2", "1.0.2-GA", 1},
+                {"1.0.2-SNAPSHOT", "1.0.2-GA-SNAPSHOT", 1},
+                {"1.0.2", "1.0.2-GA-SNAPSHOT", 1},
+                {"1.0.2-GA", "1.0.2-GA-SNAPSHOT", 1},
+                {"1.0.2-GA", "1.0.2-RC1", 1},
+                {"1.0.2-GA-SNAPSHOT", "1.0.2-RC1", 1},
+                {"1.0.2-GA", "1.0.2-RC1-SNAPSHOT", 1},
+                {"1.0.2-GA-SNAPSHOT", "1.0.2-RC1-SNAPSHOT", 1},
                 {"1.0.2-M20", "1.0.2-M19", 1},
                 {"1.0.2-M20", "1.0.2-M20-SNAPSHOT", 1},
                 {"1.0.2-M20", "1.0.2-M20-RC1", 1},
@@ -176,6 +193,10 @@ public class TestVersion {
                 {"1.0.1", "1.1.1", -1},
                 {"1.1.1.0", "1.1.1.1", -1},
                 {"1.0.1", "1.0.2", -1},
+                {"1.0.1-GA", "1.0.2-GA", -1},
+                {"1.0.1-GA-SNAPSHOT", "1.0.1-GA", -1},
+                {"1.0.1-RC2-SNAPSHOT", "1.0.1-GA-SNAPSHOT", -1},
+                {"1.0.1-RC2", "1.0.1-GA", -1},
                 {"1.0.1-SNAPSHOT", "1.0.1", -1},
                 {"1.0.2-M20", "1.0.2", -1},
                 {"1.0.2-beta-1", "1.0.2-RC1", -1}};
@@ -200,6 +221,8 @@ public class TestVersion {
                 {"1.1.1-SNAPSHOT", "1\\.1\\.0|1\\.1\\.1\\-SNAPSHOT", true},
                 {"1.1.1-beta-1", "1\\.1\\.(.*)", true},
                 {"1.1.1-RC1", "1\\.1\\.(.*)", true},
+                {"1.1.1-GA", "1\\.1\\.(.*)", true},
+                {"1.1.1-GA-SNAPSHOT", "1\\.1\\.(.*)", true},
                 {"1.1.1-M1", "1\\.1\\.(.*)", true},
                 {"1.1.0", "1\\.1\\.0|1\\.\\1\\.1-SNAPSHOT", true},
                 {"1.0.1", "1\\.0\\.2", false},
@@ -225,6 +248,7 @@ public class TestVersion {
         assertTrue(Version.valueOf("4.0.0-beta-2").is4Major());
         assertTrue(Version.is4Major("4.0.0-beta-2-SNAPSHOT"));
         assertTrue(Version.is4Major("4.0.0-RC1-SNAPSHOT"));
+        assertTrue(Version.is4Major("4.0.0-GA-SNAPSHOT"));
     }
 
 }

@@ -14,6 +14,13 @@
  */
 package com.codenvy.plugin.webhooks.github;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Link factories to a GitHub webhook.
  * A factory may be linked to a webhook only if source.project.location = {@link repositoryUrl}
@@ -22,20 +29,25 @@ package com.codenvy.plugin.webhooks.github;
  */
 public class GithubWebhook {
 
-    private final String   repositoryUrl;
-    private final String[] factoryIDs;
+    private static final Logger LOG = LoggerFactory.getLogger(GithubWebhook.class);
 
-    public GithubWebhook(String repositoryUrl, String[] factoryIDs) {
+    private final String      repositoryUrl;
+    private final Set<String> factoriesIds;
+
+    public GithubWebhook(String repositoryUrl, String... factoriesIds) {
         this.repositoryUrl = repositoryUrl;
-        // TODO Check that source.project.location = repositoryUrl for at least one project in each factory
-        this.factoryIDs = factoryIDs;
+
+        if (factoriesIds.length == 0) {
+            LOG.warn("A webhook for repository {} cannot be set without factories", repositoryUrl);
+        }
+        this.factoriesIds = new HashSet<String>(Arrays.asList(factoriesIds));
     }
 
     public String getRepositoryUrl() {
         return repositoryUrl;
     }
 
-    public String[] getFactoryIDs() {
-        return factoryIDs;
+    public Set<String> getFactoriesIds() {
+        return factoriesIds;
     }
 }

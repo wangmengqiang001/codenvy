@@ -30,13 +30,15 @@ public class Version implements Comparable<Version> {
     private static final String MILESTONE_VERSION_PREFIX = "-M";
     private static final String BETA_VERSION_PREFIX      = "-beta-";
     private static final String RC_VERSION_PREFIX        = "-RC";
+    private static final String GA                       = "-GA";
     private static final String SNAPSHOT                 = "-SNAPSHOT";
 
-    private static final Pattern VERSION         =
+    private static final Pattern VERSION =
         compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(\\.0|\\.[1-9]+[0-9]*|)" +
                 "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
                 "(" + BETA_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
                 "(" + RC_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
+                "(" + GA + "|)" +
                 "(" + SNAPSHOT + "|)$");
 
     private final int     major;
@@ -46,6 +48,7 @@ public class Version implements Comparable<Version> {
     private final int     milestone;
     private final int     beta;
     private final int     rc;
+    private final boolean isGa;
     private final boolean isSnapshot;
 
     /**
@@ -58,6 +61,7 @@ public class Version implements Comparable<Version> {
                    int milestone,
                    int beta,
                    int rc,
+                   boolean isGa,
                    boolean isSnapshot) {
         this.major = major;
         this.minor = minor;
@@ -66,6 +70,7 @@ public class Version implements Comparable<Version> {
         this.milestone = milestone;
         this.beta = beta;
         this.rc = rc;
+        this.isGa = isGa;
         this.isSnapshot = isSnapshot;
     }
 
@@ -112,6 +117,10 @@ public class Version implements Comparable<Version> {
             rc = parseInt(rcGroup.substring(RC_VERSION_PREFIX.length()));
         }
 
+        boolean isGa = !matcher.group(8).isEmpty();
+
+        boolean isSnapshot = !matcher.group(9).isEmpty();
+
         return new Version(parseInt(matcher.group(1)),
                            parseInt(matcher.group(2)),
                            parseInt(matcher.group(3)),
@@ -119,7 +128,8 @@ public class Version implements Comparable<Version> {
                            milestone,
                            beta,
                            rc,
-                           !matcher.group(8).isEmpty());
+                           isGa,
+                           isSnapshot);
     }
 
     /**
@@ -164,6 +174,9 @@ public class Version implements Comparable<Version> {
         if (rc != version.rc) {
             return false;
         }
+        if (isGa != version.isGa) {
+            return false;
+        }
         if (isSnapshot != version.isSnapshot) {
             return false;
         }
@@ -181,6 +194,7 @@ public class Version implements Comparable<Version> {
         result = 31 * result + milestone;
         result = 31 * result + beta;
         result = 31 * result + rc;
+        result = 31 * result + (isGa ? 1 : 0);
         result = 31 * result + (isSnapshot ? 1 : 0);
         return result;
     }
@@ -199,10 +213,12 @@ public class Version implements Comparable<Version> {
             || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone && beta == 0 && o.beta == 0
                 && (rc == 0 && o.rc != 0 || rc != 0 && o.rc != 0 && rc > o.rc))
             || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone
-                && beta == o.beta && rc == o.rc && !isSnapshot && o.isSnapshot)) {
+                && beta == o.beta && rc == o.rc && !isSnapshot && o.isSnapshot)
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone
+                && beta == o.beta && rc == o.rc && !isGa && o.isGa)){
             return 1;
         } else if (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix
-                   && milestone == o.milestone && beta == o.beta && rc == o.rc && isSnapshot == o.isSnapshot) {
+                   && milestone == o.milestone && beta == o.beta && rc == o.rc && isGa == o.isGa && isSnapshot == o.isSnapshot) {
             return 0;
         } else {
             return -1;
@@ -219,6 +235,7 @@ public class Version implements Comparable<Version> {
                + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "")
                + (beta > 0 ? BETA_VERSION_PREFIX + beta : "")
                + (rc > 0 ? RC_VERSION_PREFIX + rc : "")
+               + (isGa ? GA : "")
                + (isSnapshot ? SNAPSHOT : "");
     }
 

@@ -248,30 +248,67 @@ setupDebugOptions() {
 }
 
 setupProxy() {
+    unset PROXY_OPTS
+
     if [ -n "$http_proxy" ]; then
-        # http_proxy should be something like http://host:port
-        # trim the "http://" off:
-        local host="${http_proxy#http://}"
-
-        # trim the host part off:
-        local port="${host#*:}"
-
-        # The final substitution removes the port for the host,
-        # and removes any (erroneously) appended junk to the port.
-        KARAF_OPTS="$KARAF_OPTS -Dhttp.proxyHost=${host%:*} -Dhttp.proxyPort=${port%/*} -Djava.net.useSystemProxies=true"
+        extractProxySettings $http_proxy "http"
     fi
 
     if [ -n "$https_proxy" ]; then
-        # https_proxy should be something like http://host:port
-        # trim the "http://" off:
-        local host="${https_proxy#http://}"
+        extractProxySettings $https_proxy "https"
+    fi
 
-        # trim the host part off:
-        local port="${host#*:}"
+    if [[ $PROXY_OPTS != "" ]]; then
+        PROXY_OPTS="$PROXY_OPTS -Djava.net.useSystemProxies=true"
+        KARAF_OPTS="$KARAF_OPTS $PROXY_OPTS"
+    fi
+}
 
-        # The final substitution removes the port for the host,
-        # and removes any (erroneously) appended junk to the port.
-        KARAF_OPTS="$KARAF_OPTS -Dhttps.proxyHost=${host%:*} -Dhttps.proxyPort=${port%/*} -Djava.net.useSystemProxies=true"
+# Setup global variable PROXY_OPTS to reflect java proxy settings, for example:
+# "-Dhttp.proxyUser=user -Dhttp.proxyPassword=pass -Dhttp.proxyHost=proxy.org -Dhttp.proxyPort=8080
+#  -Dhttps.proxyUser=user -Dhttps.proxyPassword=pass -Dhttps.proxyHost=proxy.org -Dhttps.proxyPort=8080 -Djava.net.useSystemProxies=true"
+#
+# parameter 1: proxy url, for example, "http://proxy.host:8080", "https://user:password@proxy.host:8080"
+# parameter 2: type of proxy = [http|https]
+extractProxySettings() {
+    local proxyUrl=$1
+    local proxyType=$2
+
+    local PROXY_WITH_USER_AUTH_REGEXP="https?://([^:]*):?(.*)@([^:]*):?(.*)"
+    local PROXY_WITHOUT_USER_AUTH_REGEXP="https?://([^:]*):?(.*)"
+
+    if [ -n "$proxyUrl" ]; then
+        local proxyUserName
+        local proxyPassword
+        local proxyHost
+        local proxyPort
+
+        if [[ $proxyUrl =~ $PROXY_WITH_USER_AUTH_REGEXP ]]; then
+            proxyUser=$([[ $proxyUrl =~ $PROXY_WITH_USER_AUTH_REGEXP ]] && echo ${BASH_REMATCH[1]})
+            proxyPassword=$([[ $proxyUrl =~ $PROXY_WITH_USER_AUTH_REGEXP ]] && echo ${BASH_REMATCH[2]})
+            proxyHost=$([[ $proxyUrl =~ $PROXY_WITH_USER_AUTH_REGEXP ]] && echo ${BASH_REMATCH[3]})
+            proxyPort=$([[ $proxyUrl =~ $PROXY_WITH_USER_AUTH_REGEXP ]] && echo ${BASH_REMATCH[4]})
+
+        elif [[ $proxyUrl =~ $PROXY_WITHOUT_USER_AUTH_REGEXP ]]; then
+            proxyHost=$([[ $proxyUrl =~ $PROXY_WITHOUT_USER_AUTH_REGEXP ]] && echo ${BASH_REMATCH[1]})
+            proxyPort=$([[ $proxyUrl =~ $PROXY_WITHOUT_USER_AUTH_REGEXP ]] && echo ${BASH_REMATCH[2]})
+        fi
+
+        if [[ $proxyUser != "" ]]; then
+            PROXY_OPTS="$PROXY_OPTS -D$proxyType.proxyUser=$proxyUser"
+        fi
+
+        if [[ $proxyPassword != "" ]]; then
+            PROXY_OPTS="$PROXY_OPTS -D$proxyType.proxyPassword=$proxyPassword"
+        fi
+
+        if [[ $proxyHost  != "" ]]; then
+            PROXY_OPTS="$PROXY_OPTS -D$proxyType.proxyHost=$proxyHost"
+        fi
+
+        if [[ $proxyPort  != "" ]]; then
+            PROXY_OPTS="$PROXY_OPTS -D$proxyType.proxyPort=$proxyPort"
+        fi
     fi
 }
 

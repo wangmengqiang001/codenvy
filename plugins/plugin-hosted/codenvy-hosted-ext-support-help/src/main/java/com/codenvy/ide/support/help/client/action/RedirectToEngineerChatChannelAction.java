@@ -14,13 +14,13 @@
  */
 package com.codenvy.ide.support.help.client.action;
 
-import org.eclipse.che.api.analytics.client.logger.AnalyticsEventLogger;
-import org.eclipse.che.ide.api.action.Action;
-import org.eclipse.che.ide.api.action.ActionEvent;
 import com.codenvy.ide.support.help.client.HelpLocalizationConstant;
 import com.codenvy.ide.support.help.client.HelpResources;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
+
+import org.eclipse.che.ide.api.action.Action;
+import org.eclipse.che.ide.api.action.ActionEvent;
 
 /**
  * Open a new window with the IRC channel URL
@@ -28,24 +28,19 @@ import com.google.inject.Inject;
  * @author Oleksii Orel
  */
 public class RedirectToEngineerChatChannelAction extends Action {
-
-    private final AnalyticsEventLogger     eventLogger;
     private final HelpLocalizationConstant locale;
 
     @Inject
     public RedirectToEngineerChatChannelAction(HelpLocalizationConstant locale,
-                                               AnalyticsEventLogger eventLogger,
                                                HelpResources resources) {
         super(locale.actionRedirectToEngineerChatChannelTitle(), locale.actionRedirectToEngineerChatChannelDescription(), null,
               resources.ircChannel());
-        this.eventLogger = eventLogger;
         this.locale = locale;
     }
 
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent e) {
-        eventLogger.log(this);
         Window.open(locale.actionRedirectToEngineerChatChannelUrl(), "_blank", "");
     }
 }

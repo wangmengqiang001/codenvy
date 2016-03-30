@@ -35,6 +35,8 @@ public interface HostedResources extends ClientBundle {
         String temporary();
 
         String temporaryLabel();
+
+        String blueButton();
     }
 
     @Source({"Hosted.css", "org/eclipse/che/ide/api/ui/style.css"})

@@ -140,7 +140,9 @@ export class LoadFactoryCtrl {
     //TODO: fix account when ready:
     let creationPromise = this.cheAPI.getWorkspace().createWorkspaceFromConfig(null, config);
     creationPromise.then((data) => {
-      this.$timeout(() => {this.startWorkspace(data); }, 1000);
+      this.$timeout(() => {
+        this.startWorkspace(data);
+      }, 1000);
     }, (error) => {
       this.handleError(error);
     });
@@ -183,7 +185,9 @@ export class LoadFactoryCtrl {
 
     this.subscribeOnEvents(workspace, bus);
 
-    this.$timeout(() => {this.doStartWorkspace(workspace); }, 2000);
+    this.$timeout(() => {
+      this.doStartWorkspace(workspace);
+    }, 2000);
   }
 
   doStartWorkspace(workspace) {
@@ -197,14 +201,13 @@ export class LoadFactoryCtrl {
     });
   }
 
-  subscribeOnEvents(data, bus){
+  subscribeOnEvents(data, bus) {
     // get channels
     let environments = data.config.environments;
     let envName = data.config.defaultEnv;
     let defaultEnvironment = this.lodash.find(environments, (environment) => {
       return environment.name === envName;
     });
-
 
 
     let machineConfigsLinks = defaultEnvironment.machineConfigs[0].links;
@@ -229,7 +232,7 @@ export class LoadFactoryCtrl {
       }
     });
 
-      // for now, display log of status channel in case of errors
+    // for now, display log of status channel in case of errors
     bus.subscribe(statusChannel, (message) => {
       if (message.eventType === 'DESTROYED' && message.workspaceId === data.id) {
         this.getLoadingSteps()[this.getCurrentProgressStep()].hasError = true;
@@ -275,20 +278,20 @@ export class LoadFactoryCtrl {
       if (message.eventType === 'RUNNING' && message.workspaceId === workspaceId) {
         this.loadFactoryService.setCurrentProgressStep(4);
         this.finish();
-    }
+      }
     });
 
     bus.subscribe(agentChannel, (message) => {
       let agentStep = 3;
-    if (this.loadFactoryService.getCurrentProgressStep() < agentStep) {
-      this.loadFactoryService.setCurrentProgressStep(agentStep);
-    }
+      if (this.loadFactoryService.getCurrentProgressStep() < agentStep) {
+        this.loadFactoryService.setCurrentProgressStep(agentStep);
+      }
 
-    if (this.getLoadingSteps()[agentStep].logs.length > 0) {
-      this.getLoadingSteps()[agentStep].logs = this.getLoadingSteps()[agentStep].logs + '\n' + message;
-    } else {
-      this.getLoadingSteps()[agentStep].logs = message;
-    }
+      if (this.getLoadingSteps()[agentStep].logs.length > 0) {
+        this.getLoadingSteps()[agentStep].logs = this.getLoadingSteps()[agentStep].logs + '\n' + message;
+      } else {
+        this.getLoadingSteps()[agentStep].logs = message;
+      }
     });
 
   }
@@ -347,7 +350,7 @@ export class LoadFactoryCtrl {
    */
   importProject(workspaceId, project, bus) {
     var promise;
-  // websocket channel
+    // websocket channel
     var channel = 'importProject:output:' + workspaceId + ':' + project.name;
 
     // on import
@@ -437,6 +440,10 @@ export class LoadFactoryCtrl {
   }
 
   downloadLogs() {
-    window.open('data:text/csv,' + encodeURIComponent(this.getLoadingSteps()[this.getCurrentProgressStep()].logs));
+    let logs = '';
+    this.getLoadingSteps().forEach((step) => {
+      logs += step.logs + '\n';
+    });
+    window.open('data:text/csv,' + encodeURIComponent(logs));
   }
 }

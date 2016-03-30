@@ -12,7 +12,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.factory.storage.mongo;
+package com.codenvy.api.dao.mongo;
 
 
 import com.google.common.base.Strings;
@@ -40,8 +40,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.print.Doc;
-import javax.validation.constraints.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -47,11 +47,9 @@ import com.codenvy.auth.sso.client.filter.UriStartFromRequestFilter;
 import com.codenvy.auth.sso.server.RolesExtractor;
 import com.codenvy.auth.sso.server.organization.UserCreationValidator;
 import com.codenvy.auth.sso.server.organization.UserCreator;
-import com.codenvy.workspace.CreateWsRootDirInterceptor;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.mongodb.client.MongoDatabase;
@@ -72,10 +70,10 @@ import org.eclipse.che.api.machine.server.recipe.PermissionsCheckerImpl;
 import org.eclipse.che.api.machine.server.recipe.RecipeLoader;
 import org.eclipse.che.api.machine.server.recipe.RecipeService;
 import org.eclipse.che.api.machine.server.recipe.providers.RecipeProvider;
-import org.eclipse.che.api.project.server.ProjectTemplateDescriptionLoader;
-import org.eclipse.che.api.project.server.ProjectTemplateRegistry;
-import org.eclipse.che.api.project.server.ProjectTemplateService;
 import org.eclipse.che.api.project.server.handlers.ProjectHandler;
+import org.eclipse.che.api.project.server.template.ProjectTemplateDescriptionLoader;
+import org.eclipse.che.api.project.server.template.ProjectTemplateRegistry;
+import org.eclipse.che.api.project.server.template.ProjectTemplateService;
 import org.eclipse.che.api.ssh.server.spi.SshDao;
 import org.eclipse.che.api.user.server.TokenValidator;
 import org.eclipse.che.api.user.server.UserProfileService;
@@ -83,8 +81,6 @@ import org.eclipse.che.api.user.server.UserService;
 import org.eclipse.che.api.user.server.dao.PreferenceDao;
 import org.eclipse.che.api.user.server.dao.UserDao;
 import org.eclipse.che.api.user.server.dao.UserProfileDao;
-import org.eclipse.che.api.vfs.server.VirtualFileFilter;
-import org.eclipse.che.api.vfs.server.search.SearcherProvider;
 import org.eclipse.che.api.workspace.server.WorkspaceConfigValidator;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceService;
@@ -98,10 +94,6 @@ import org.eclipse.che.inject.DynaModule;
 import org.eclipse.che.security.oauth.OAuthAuthenticatorProvider;
 import org.eclipse.che.security.oauth.OAuthAuthenticatorProviderImpl;
 import org.eclipse.che.security.oauth.OAuthAuthenticatorTokenProvider;
-import org.eclipse.che.vfs.impl.fs.CleanableSearcherProvider;
-import org.eclipse.che.vfs.impl.fs.LocalFSMountStrategy;
-import org.eclipse.che.vfs.impl.fs.MountPointCacheCleaner;
-import org.eclipse.che.vfs.impl.fs.WorkspaceHashLocalFSMountStrategy;
 import org.everrest.core.impl.async.AsynchronousJobPool;
 import org.everrest.core.impl.async.AsynchronousJobService;
 import org.everrest.guice.ServiceBindingHelper;
@@ -145,22 +137,13 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(WSocketEventBusServer.class);
 
         install(new org.eclipse.che.api.core.rest.CoreRestModule());
-        install(new org.eclipse.che.api.analytics.AnalyticsModule());
-        install(new org.eclipse.che.api.vfs.server.VirtualFileSystemModule());
+        install(new org.eclipse.che.api.vfs.VirtualFileSystemModule());
+        /*
+        install(new org.eclipse.che.api.factory.FactoryModule());
+        */
         install(new org.eclipse.che.api.machine.server.MachineModule());
 
         install(new org.eclipse.che.swagger.deploy.DocsModule());
-
-
-        //Temporary FS change
-        final Multibinder<VirtualFileFilter> multibinder = Multibinder.newSetBinder(binder(),
-                                                                                    VirtualFileFilter.class,
-                                                                                    Names.named("vfs.index_filter"));
-        multibinder.addBinding().toInstance(virtualFile -> !virtualFile.getPath().endsWith("/.codenvy/misc.xml"));
-        bind(SearcherProvider.class).to(CleanableSearcherProvider.class);
-        bind(MountPointCacheCleaner.Finalizer.class).asEagerSingleton();
-
-        bind(LocalFSMountStrategy.class).to(WorkspaceHashLocalFSMountStrategy.class); // (RemoteDockerNode class want it)
 
         //oauth 2
         bind(OAuthAuthenticatorProvider.class).to(OAuthAuthenticatorProviderImpl.class);
@@ -177,7 +160,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
                                  .toProvider(FactoryMongoDatabaseProvider.class);
 
 
-        bind(org.eclipse.che.api.factory.server.FactoryStore.class).to(com.codenvy.factory.storage.mongo.MongoDBFactoryStore.class);
+        bind(org.eclipse.che.api.factory.server.FactoryStore.class).to(com.codenvy.api.dao.mongo.MongoDBFactoryStore.class);
         bind(FactoryAcceptValidator.class).to(org.eclipse.che.api.factory.server.impl.FactoryAcceptValidatorImpl.class);
         bind(FactoryCreateValidator.class).to(org.eclipse.che.api.factory.server.impl.FactoryCreateValidatorImpl.class);
         bind(FactoryEditValidator.class).to(org.eclipse.che.api.factory.server.impl.FactoryEditValidatorImpl.class);
@@ -307,12 +290,6 @@ public class OnPremisesIdeApiModule extends AbstractModule {
                                  .toProvider(MachineMongoDatabaseProvider.class);
 
         install(new ScheduleModule());
-
-        CreateWsRootDirInterceptor createWsRootDirInterceptor = new CreateWsRootDirInterceptor();
-        requestInjection(createWsRootDirInterceptor);
-        bindInterceptor(Matchers.subclassesOf(WorkspaceManager.class),
-                        names("createWorkspace"),
-                        createWsRootDirInterceptor);
 
         bind(org.eclipse.che.plugin.docker.client.DockerConnector.class).to(com.codenvy.swarm.client.SwarmDockerConnector.class);
 

@@ -18,7 +18,7 @@
 
 -->
 <che-panel che-title="Factory Configuration">
-  <div class="factory-configuration-panel" ng-if="factoryConfigurationCtrl.factoryContent">
+  <div class="factory-configuration-panel" ng-show="factoryConfigurationCtrl.factory && factoryConfigurationCtrl.factory.originFactory">
     <md-content layout="column" layout-fill>
       <div class="json-editor">
         <textarea ui-codemirror ng-model="factoryConfigurationCtrl.factoryContent"></textarea>
@@ -30,13 +30,14 @@
           <span>
             <che-button-default che-button-title="Reload"
                                 che-event-logger="factory-details/information-tab/delete-factory"
-                                 ng-click="factoryConfigurationCtrl.updateFactory(factoryConfigurationCtrl.factoryId)"/>
+                                ng-click="factoryConfigurationCtrl.updateFactory(factoryConfigurationCtrl.factoryId)"/>
           </span>
           <span>
-            <che-button-primary ng-disabled="factoryConfigurationCtrl.factoryContent === factoryConfigurationCtrl.$filter('json')(factoryConfigurationCtrl.originFactoryContent, 2);"
-                                 che-button-title="Update"
-                                 che-event-logger="factory-details/information-tab/delete-factory"
-                                 ng-click="factoryConfigurationCtrl.setFactoryContent(factoryConfigurationCtrl.factoryId, factoryConfigurationCtrl.factoryContent)"/>
+            <che-button-primary
+              ng-disabled="factoryConfigurationCtrl.factoryContent === factoryConfigurationCtrl.$filter('json')(factoryConfigurationCtrl.originFactoryContent, 2);"
+              che-button-title="Update"
+              che-event-logger="factory-details/information-tab/delete-factory"
+              ng-click="factoryConfigurationCtrl.setFactoryContent(factoryConfigurationCtrl.factoryId, factoryConfigurationCtrl.factoryContent)"/>
           </span>
     </div>
   </div>

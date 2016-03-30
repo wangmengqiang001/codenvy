@@ -25,15 +25,11 @@ PUPPET_SERVER_PACKAGE=puppet-server-3.8.6-1.el7.noarch
 
 EXTERNAL_DEPENDENCIES=("https://codenvy.com||0"
                        "https://install.codenvycorp.com||0"
-                       "http://archive.apache.org/dist/ant/binaries||0"
                        "http://dl.fedoraproject.org/pub/epel/||1"
-                       "https://storage.googleapis.com/appengine-sdks/||0"
-                       "http://www.us.apache.org/dist/maven/||0"
                        "https://repo.mongodb.org/yum/redhat/||0"
-                       "http://repo.mysql.com/||0"
                        "http://nginx.org/packages/centos/||1"
                        "http://yum.postgresql.org/||0"
-                       "http://yum.puppetlabs.com/||1"
+                       "https://yum.puppetlabs.com/||1"
                        "http://repo.zabbix.com/zabbix/||0"
                        "${JDK_URL}|Cookie:oraclelicense=accept-securebackup-cookie|0"
                        "http://mirror.centos.org/centos||0"
@@ -757,7 +753,7 @@ printPreInstallInfo_single() {
     println
 
     preConfigureSystem
-    doCheckAvailableResourcesLocally 2500000 1 40000000 8000000 4 300000000
+    doCheckAvailableResourcesLocally 2500000 1 1000000 8000000 4 300000000
 
     println "Checking access to external dependencies..."
     println
@@ -813,6 +809,9 @@ doEnsureFairSourceLicenseAgreement() {
 # parameter 1 - MIN_RAM_KB
 # parameter 2 - MIN_CORES
 # parameter 3 - MIN_DISK_SPACE_KB
+# parameter 4 - REC_RAM_KB
+# parameter 5 - REC_CORES
+# parameter 6 - REC_DISK_SPACE_KB
 doCheckAvailableResourcesLocally() {
     local MIN_RAM_KB=$1
     local MIN_CORES=$2
@@ -869,7 +868,7 @@ doCheckAvailableResourcesLocally() {
     local availableRAMIssue=false
     local RAMStateToDisplay=$(echo "$(printSuccess "[OK]")")
 
-    local availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $4}'`  # available
+    local availableDiskSpace=`sudo df /home | tail -1 | awk '{print $4}'`  # available
     local availableDiskSpaceIssue=false
     local diskStateToDisplay=$(echo "$(printSuccess "[OK]")")
 
@@ -998,7 +997,7 @@ printPreInstallInfo_multi() {
     println
 
     preConfigureSystem
-    doCheckAvailableResourcesLocally 1000000 1 20000000 2000000 2 50000000
+    doCheckAvailableResourcesLocally 1000000 1 1000000 2000000 2 50000000
 
 
     if [[ ${ARTIFACT} == "codenvy" ]]; then

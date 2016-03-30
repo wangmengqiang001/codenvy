@@ -43,7 +43,7 @@ USER_ID=${OUTPUT}
 authWithoutRealmAndServerDns "cdec" "pwd123ABC"
 
 # create workspace "workspace-1"
-doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/config?token=${TOKEN}"
+doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/?token=${TOKEN}"
 fetchJsonParameter "id"
 WORKSPACE_ID=${OUTPUT}
 
@@ -55,9 +55,14 @@ doSleep "10m"  "Wait until workspace starts to avoid 'java.lang.NullPointerExcep
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 validateExpectedString ".*\"status\":\"RUNNING\".*"
 
-# create project "project-1" in workspace "workspace-1"
-doPost "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\":{\"maven.version\":[\"1.0-SNAPSHOT\"], \"maven.packaging\":[\"jar\"], \"maven.source.folder\":[\"src/main/java\"], \"maven.test.source.folder\":[\"src/test/java\"], \"maven.artifactId\":[\"project-1\"], \"maven.groupId\":[\"project-1\"]}, \"type\":\"maven\", \"source\":{\"location\":null, \"type\":null, \"parameters\":{}}, \"contentRoot\":null, \"modules\":[], \"path\":null, \"description\":null, \"problems\":[], \"mixins\":[]}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/project?token=${TOKEN}"
-doPost "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\":{\"maven.version\":[\"1.0-SNAPSHOT\"], \"maven.packaging\":[\"jar\"], \"maven.source.folder\":[\"src/main/java\"], \"maven.test.source.folder\":[\"src/test/java\"], \"maven.artifactId\":[\"project-1\"], \"maven.groupId\":[\"project-1\"]}, \"type\":\"maven\", \"source\":{\"location\":null, \"type\":null, \"parameters\":{}}, \"contentRoot\":null, \"modules\":[], \"path\":null, \"description\":null, \"problems\":[], \"mixins\":[]}" "http://${HOST_URL}/api/ext/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
+# create project "project-1" of type "console-java" in workspace "workspace-1"
+doPost "application/json" "{\"location\":\"https://github.com/che-samples/console-java-simple.git\",\"parameters\":{},\"type\":\"git\"}" "http://${HOST_URL}/api/ext/project/${WORKSPACE_ID}/import/project-1?token=${TOKEN}"
+
+doPost "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\":{}, \"type\":\"maven\", \"source\":{\"location\":\"https://github.com/che-samples/console-java-simple.git\", \"type\":\"git\", \"parameters\":{}}, \"path\":\"project-1\", \"description\":null, \"problems\":[], \"mixins\":[]}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/project?token=${TOKEN}"
+validateExpectedString ".*\"status\":\"RUNNING\".*"
+
+doPut "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\":{}, \"type\":\"maven\", \"source\":{\"location\":\"https://github.com/che-samples/console-java-simple.git\", \"type\":\"git\", \"parameters\":{}}, \"path\":\"project-1\", \"description\":null, \"problems\":[], \"mixins\":[]}" "http://${HOST_URL}/api/ext/project/${WORKSPACE_ID}/project-1?token=${TOKEN}"
+validateExpectedString ".*\"path\":\"/project-1.*"
 
 # create factory from template "minimal"
 doPost "application/json" "{\"v\": \"4.0\",\"workspace\": {\"projects\": [{\"links\": [],\"name\": \"Spring\",\"attributes\": {\"languageVersion\": [\"1.6\"],\"language\": [\"java\"]},\"type\": \"maven\", \"source\": {\"location\": \"https://github.com/codenvy-templates/web-spring-java-simple.git\",\"type\": \"git\",\"parameters\": {\"keepVcs\": \"false\", \"branch\": \"3.1.0\"}},\"modules\": [],\"path\": \"/Spring\",\"mixins\": [\"git\"],\"problems\": []}], \"defaultEnv\": \"wss\",\"name\": \"wss\",\"environments\": [{\"machineConfigs\": [{\"dev\": true,\"limits\": {\"ram\":2048},\"source\": {\"location\": \"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\": \"recipe\"}, \"name\": \"dev-machine\",\"type\": \"docker\"}],\"name\": \"wss\"}],\"links\": []}}" "http://${HOST_URL}/api/factory?token=${TOKEN}"
@@ -68,6 +73,10 @@ FACTORY_ID=${OUTPUT}
 executeIMCommand "im-backup"
 fetchJsonParameter "file"
 BACKUP_WITH_MODIFICATIONS=${OUTPUT}
+
+# verify that there is project-1 on file system
+executeSshCommand "sudo ls -R /home/codenvy/codenvy-data/fs"
+validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}/project-1/src/main/java/org/eclipse/che/examples\:.*HelloWorld.java.*"
 
 # restore initial state
 executeIMCommand "im-restore" ${BACKUP_AT_START}
@@ -104,7 +113,7 @@ validateExpectedString ".*project-1.*workspace-1.*"
 
 # verify that there is project-1 on file system
 executeSshCommand "sudo ls -R /home/codenvy/codenvy-data/fs"
-validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}.*project-1\:\spom.xml.src.*"
+validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}/project-1/src/main/java/org/eclipse/che/examples\:.*HelloWorld.java.*"
 
 doGet "http://${HOST_URL}/api/factory/${FACTORY_ID}?token=${TOKEN}"
 validateExpectedString ".*\"name\"\:\"wss\".*"

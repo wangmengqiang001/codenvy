@@ -32,12 +32,12 @@
             "master"
           ]
         },
-        "type":"GulpJS",
+        "type":"maven",
         "source":{
-          "location":"https://github.com/codenvy-demos/dashboard.git",
+          "location":"https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/test-project",
           "type":"git",
           "parameters":{
-            "branch":"MKTG-341"
+            "branch":"bugfixes"
           }
         },
         "modules":[

@@ -83,15 +83,13 @@
 
 .statusIndexStepLabel {
     color: mainFontColor;
-    border: 1px solid iconColor;
-    border-radius: 14px;
-    text-align: center;
-    width: 22px;
-    height: 22px;
-    align-self: center;
-    margin-right: 10px;
-    line-height: 22px;
-    flex-shrink: 0;
+    border: none;
+    border-radius: 5px;
+    width: 10px;
+    height: 10px;
+    margin-top: 5px;
+    margin-left: 0px;
+    margin-right: 8px;
     background-color: selectionBackground;
 }
 

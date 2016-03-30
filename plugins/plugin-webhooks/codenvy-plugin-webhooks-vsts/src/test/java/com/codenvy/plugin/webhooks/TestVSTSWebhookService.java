@@ -14,14 +14,11 @@
  */
 package com.codenvy.plugin.webhooks;
 
-import com.codenvy.plugin.webhooks.vsts.shared.VSTSDocument;
+import com.codenvy.plugin.webhooks.vsts.VSTSConnection;
 import com.codenvy.plugin.webhooks.vsts.VSTSWebhookService;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.api.core.rest.HttpJsonRequest;
-import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
-import org.eclipse.che.api.core.rest.HttpJsonResponse;
 import org.eclipse.che.api.factory.shared.dto.Factory;
 import org.eclipse.che.api.user.shared.dto.UserDescriptor;
 import org.eclipse.che.dto.server.DtoFactory;
@@ -41,7 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -74,34 +71,31 @@ public class TestVSTSWebhookService {
         // Prepare factoryConnection
         FactoryConnection mockFactoryConnection = mock(FactoryConnection.class);
         Factory VSTSfakeFactory = DtoFactory.getInstance().createDtoFromJson(resourceToString("factory-codenvy.json"), Factory.class);
-        when(mockFactoryConnection.findFactory("codenvy", FAKE_USER_ID)).thenReturn(Lists.newArrayList(VSTSfakeFactory));
-        when(mockFactoryConnection.saveFactory(VSTSfakeFactory)).thenReturn(VSTSfakeFactory);
+        when(mockFactoryConnection.findFactory("codenvy", FAKE_USER_ID)).thenReturn(ImmutableList.of(VSTSfakeFactory));
+        when(mockFactoryConnection.saveFactory(anyObject())).thenReturn(VSTSfakeFactory);
+        when(mockFactoryConnection.getFactory(VSTSfakeFactory.getId())).thenReturn(VSTSfakeFactory);
+        when(mockFactoryConnection.updateFactory(VSTSfakeFactory)).thenReturn(VSTSfakeFactory);
 
-        HttpJsonRequestFactory fakeHttpJsonRequestFactory = mock(HttpJsonRequestFactory.class);
-        HttpJsonRequest fakeHttpJsonRequest = mock(HttpJsonRequest.class);
-        when(fakeHttpJsonRequest.usePutMethod()).thenReturn(fakeHttpJsonRequest);
-        when(fakeHttpJsonRequest.setBody(DtoFactory.newDto(VSTSDocument.class).withId("WI9-develop-factory").withValue(
-                "http://internal.codenvycorp.com/f?name=factory-mktg-341&user=useraxi5p0fe2mlmmf3r").withEtag("-1")))
-                .thenReturn(fakeHttpJsonRequest);
-        when(fakeHttpJsonRequest.setBody(DtoFactory.newDto(VSTSDocument.class).withId("WI9-review-factory").withValue(
-                "http://internal.codenvycorp.com/f?name=factory-mktg-341&user=useraxi5p0fe2mlmmf3r").withEtag("-1")))
-                .thenReturn(fakeHttpJsonRequest);
-        when(fakeHttpJsonRequest.setAuthorizationHeader(anyString())).thenReturn(fakeHttpJsonRequest);
-        when(fakeHttpJsonRequest.addQueryParam(anyString(), anyString())).thenReturn(fakeHttpJsonRequest);
-        HttpJsonResponse fakeHttpJsonResponse = mock(HttpJsonResponse.class);
-        when(fakeHttpJsonResponse.asDto(VSTSDocument.class)).thenReturn(
-                DtoFactory.newDto(VSTSDocument.class).withId("testID").withValue("testValue").withEtag("-1"));
-        when(fakeHttpJsonRequest.request()).thenReturn(fakeHttpJsonResponse);
-        when(fakeHttpJsonRequestFactory.fromUrl(anyString())).thenReturn(fakeHttpJsonRequest);
+        // Prepare VSTSConnection
+        VSTSConnection mockVSTSConnection = mock(VSTSConnection.class);
+        when(mockVSTSConnection.getRepositoryNameUrl("https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/_apis/git/repositories/278d5cd2-584d-4b63-824a-2ba458937249", "2.2-preview.1",
+                                                     org.eclipse.che.commons.lang.Pair.of("username", "password"))).thenReturn("https://fabrikam-fiber-inc.visualstudio.com/DefaultCollection/test-project");
 
         // Prepare VSTSWebhookService
         fakeVSTSWebhookService =
-                new VSTSWebhookService(mockAuthConnection, mockFactoryConnection, mockUserConnection, fakeHttpJsonRequestFactory);
+                new VSTSWebhookService(mockAuthConnection, mockFactoryConnection, mockUserConnection, mockVSTSConnection);
     }
 
     @Test
     public void testVSTSWebhookWorkItemCreatedEventNoConnector() throws Exception {
         HttpServletRequest mockRequest = prepareRequest("work_item_created");
+        Response response = fakeVSTSWebhookService.handleVSTSWebhookEvent(mockRequest);
+        Assert.assertTrue(response.getStatus() == OK.getStatusCode());
+    }
+
+    @Test
+    public void testVSTSWebhookPullRequestUpdatedNoConnector() throws Exception {
+        HttpServletRequest mockRequest = prepareRequest("pull_request_updated");
         Response response = fakeVSTSWebhookService.handleVSTSWebhookEvent(mockRequest);
         Assert.assertTrue(response.getStatus() == OK.getStatusCode());
     }
@@ -113,6 +107,9 @@ public class TestVSTSWebhookService {
         switch (eventType) {
             case "work_item_created":
                 eventMessageString = resourceToString("vsts-work-item-created-event.json");
+                break;
+            case "pull_request_updated":
+                eventMessageString = resourceToString("vsts-pullrequest-updated-event.json");
                 break;
             default:
                 break;

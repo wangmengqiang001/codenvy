@@ -89,3 +89,9 @@
     fill: #e7e7e7;
     float: left;
 }
+
+.blueButton {
+    background-image: linear-gradient(#2f75a3 0px, #2f75a3 5%, #266c9e 5%, #266c9e 100%);
+    height: 24px;
+    lineHeight: 24px;
+}

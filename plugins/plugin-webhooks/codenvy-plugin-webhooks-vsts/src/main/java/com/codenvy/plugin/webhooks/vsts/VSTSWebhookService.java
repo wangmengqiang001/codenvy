@@ -22,19 +22,15 @@ import io.swagger.annotations.ApiResponses;
 
 import com.codenvy.plugin.webhooks.AuthConnection;
 import com.codenvy.plugin.webhooks.FactoryConnection;
+import com.codenvy.plugin.webhooks.FactoryType;
 import com.codenvy.plugin.webhooks.UserConnection;
 import com.codenvy.plugin.webhooks.BaseWebhookService;
 import com.codenvy.plugin.webhooks.vsts.shared.GenericEvent;
 import com.codenvy.plugin.webhooks.vsts.shared.PullRequestUpdatedEvent;
-import com.codenvy.plugin.webhooks.vsts.shared.VSTSDocument;
 import com.codenvy.plugin.webhooks.vsts.shared.WorkItemCreationEvent;
 import com.codenvy.plugin.webhooks.vsts.shared.WorkItemCreationResource;
 
-import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.rest.HttpJsonRequest;
-import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
-import org.eclipse.che.api.core.rest.HttpJsonResponse;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.factory.shared.dto.Factory;
 import org.eclipse.che.api.factory.shared.dto.Policies;
@@ -56,7 +52,6 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,6 +61,10 @@ import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static com.codenvy.plugin.webhooks.FactoryType.DEVELOP;
+import static com.codenvy.plugin.webhooks.FactoryType.REVIEW;
+import static com.codenvy.plugin.webhooks.vsts.VSTSWebhookType.PULL_REQUEST_UPDATED_WEBHOOK;
+import static com.codenvy.plugin.webhooks.vsts.VSTSWebhookType.WORK_ITEM_CREATED_WEBHOOK;
 
 @Api(
         value = "/vsts-webhook",
@@ -77,18 +76,18 @@ public class VSTSWebhookService extends BaseWebhookService {
     private static final Logger LOG                               = LoggerFactory.getLogger(VSTSWebhookService.class);
     private static final String VSTS_WEBHOOKS_PROPERTIES_FILENAME = "vsts-webhooks.properties";
 
-    private final FactoryConnection      factoryConnection;
-    private final UserConnection         userConnection;
-    private final HttpJsonRequestFactory httpJsonRequestFactory;
+    private final FactoryConnection factoryConnection;
+    private final UserConnection    userConnection;
+    private final VSTSConnection    vstsConnection;
 
     @Inject
     public VSTSWebhookService(final AuthConnection authConnection, final FactoryConnection factoryConnection,
-                              final UserConnection userConnection, final HttpJsonRequestFactory httpJsonRequestFactory) {
-        super(authConnection);
+                              final UserConnection userConnection, final VSTSConnection vstsConnection) {
+        super(authConnection, factoryConnection);
 
         this.factoryConnection = factoryConnection;
         this.userConnection = userConnection;
-        this.httpJsonRequestFactory = httpJsonRequestFactory;
+        this.vstsConnection = vstsConnection;
     }
 
     @ApiOperation(value = "Handle VSTS webhook events",
@@ -103,7 +102,7 @@ public class VSTSWebhookService extends BaseWebhookService {
     public Response handleVSTSWebhookEvent(@ApiParam(value = "New VSTS event", required = true)
                                            @Context HttpServletRequest request)
             throws ServerException {
-        Response response = Response.accepted().build();
+        Response response = Response.ok().build();
         try (ServletInputStream inputStream = request.getInputStream()) {
             final String requestInputString = IoUtil.readAndCloseQuietly(inputStream);
 
@@ -116,13 +115,14 @@ public class VSTSWebhookService extends BaseWebhookService {
                         // Create {@link WorkItemCreationEvent} from JSON
                         final WorkItemCreationEvent wicEvent =
                                 DtoFactory.getInstance().createDtoFromJson(requestInputString, WorkItemCreationEvent.class);
-                        response = handleWorkItemCreationEvent(wicEvent);
+                        handleWorkItemCreationEvent(wicEvent);
                         break;
                     case "git.pullrequest.updated":
                         // Create {@link PullRequestUpdatedEvent} from JSON
                         final PullRequestUpdatedEvent pruEvent =
                                 DtoFactory.getInstance().createDtoFromJson(requestInputString, PullRequestUpdatedEvent.class);
-                        // TODO Implement handling of Pull Request merged events
+                        handlePullRequestUpdatedEvent(pruEvent);
+                        break;
                     default:
                         response = Response.accepted(
                                 new GenericEntity<>("VSTS message \'" + eventType + "\' received. It isn't intended to be processed.",
@@ -147,11 +147,14 @@ public class VSTSWebhookService extends BaseWebhookService {
      * HTTP 202 response if event was processed partially
      * @throws ServerException
      */
-    private Response handleWorkItemCreationEvent(WorkItemCreationEvent workItemCreationEvent) throws ServerException {
+    private void handleWorkItemCreationEvent(WorkItemCreationEvent workItemCreationEvent) throws ServerException {
         LOG.debug("{}", workItemCreationEvent);
 
         // Set current Codenvy user
-        EnvironmentContext.getCurrent().setUser(new TokenUser());
+        if (EnvironmentContext.getCurrent().getUser() == null) {
+            EnvironmentContext.getCurrent().setUser(new TokenUser());
+        }
+
         // Get current user id
         final String userId = userConnection.getCurrentUser().getId();
 
@@ -165,184 +168,336 @@ public class VSTSWebhookService extends BaseWebhookService {
         final List<Factory> parentFactories = factoryConnection.findFactory(projectName, userId);
 
         if (parentFactories.isEmpty()) {
-            return Response.accepted(new GenericEntity<>("No parent factory with name " + projectName + " found", String.class)).build();
+            LOG.error("No parent factory with name {} found", projectName);
+            throw new ServerException("No parent factory with name " + projectName + " found");
         }
 
-        Factory parentFactory = parentFactories.get(0);
+        final Factory parentFactory = parentFactories.get(0);
 
         // Create Develop & Review factories from parent factory
-        parentFactory.setCreator(null);
-        parentFactory.setId(null);
-        Map<String, String> projectSourceParameters = parentFactory.getWorkspace().getProjects().get(0).getSource().getParameters();
-        projectSourceParameters.put("branch", projectName + "-" + workItemId);
-        parentFactory.getWorkspace().getProjects().get(0).getSource().withParameters(projectSourceParameters);
-
-        final Factory storedDevelopFactory = buildAndSaveWorkItemFactory(parentFactory, "develop", projectName, workItemId);
+        final Factory developFactory = createFactoryForWorkItem(parentFactory, DEVELOP, workItemId);
+        final Factory storedDevelopFactory = factoryConnection.saveFactory(developFactory);
         LOG.debug("storedDevelopFactory: {}", storedDevelopFactory);
-        final Factory storedReviewFactory = buildAndSaveWorkItemFactory(parentFactory, "review", projectName, workItemId);
+        final Factory reviewFactory = createFactoryForWorkItem(parentFactory, REVIEW, workItemId);
+        final Factory storedReviewFactory = factoryConnection.saveFactory(reviewFactory);
         LOG.debug("storedReviewFactory: {}", storedReviewFactory);
 
-        // Add factory IDs to webhook configuration
-        // TODO Add factory IDs to existing webhook configuration or create new configuration otherwise
+        // Get VSTS data from work item URL
+        // URL to parse: 'https://{account}.{host}.com/{collection}/_apis/wit/workItems'
+        final String collectionUrl = workItemUrl.substring(0, workItemUrl.indexOf("/_apis/wit/workItems"));
+        LOG.debug("collectionUrl: {}", collectionUrl);
+        final String[] collectionUrlSplit = collectionUrl.split("/");
+        final String collection = collectionUrlSplit[collectionUrlSplit.length - 1];
 
-        // Push factory URLs to VSTS project settings
-        String projectApiUrl = workItemUrl.split("/wit/workItems")[0];
-        LOG.debug("projectApiUrl: {}", projectApiUrl);
-        Optional<VSTSWebhook> webhook  = Optional.ofNullable(getVSTSWebhook(projectApiUrl));
+        final String[] hostSplit = collectionUrlSplit[2].split("\\.");
+        final String account = hostSplit[0];
+        final String host = hostSplit[1];
 
-        if (!webhook.isPresent()) {
-            LOG.error("No webhook configured for project API URL {}", projectApiUrl);
-            throw new ServerException("No webhook configured for project API URL " + projectApiUrl);
-        }
+        // Get configured 'work item created' webhook for given VSTS account, host and collection
+        Optional<WorkItemCreatedWebhook> webhook  = getWorkItemCreatedWebhook(host, account, collection);
 
-        VSTSWebhook w = webhook.get();
-        final Pair<String, String> vstsCredentials = w.getCredentials();
+        WorkItemCreatedWebhook w = webhook.orElseThrow(
+                () -> new ServerException("No 'work item created' webhook configured for collection URL " + collectionUrl));
+
+        // Prepare data to store in VSTS project settings
         final String apiVersion = w.getApiVersion();
+        final Pair<String, String> credentials = w.getCredentials();
 
-        storeFactoryLinkOnVSTS(projectApiUrl, apiVersion, vstsCredentials, storedDevelopFactory, "WI" + workItemId + "-develop-factory");
-        storeFactoryLinkOnVSTS(projectApiUrl, apiVersion, vstsCredentials, storedReviewFactory, "WI" + workItemId + "-review-factory");
+        final String developSettingKey = String.format("WI%s-%s-factory", workItemId, DEVELOP.toString());
+        final String reviewSettingKey = String.format("WI%s-%s-factory", workItemId, REVIEW.toString());
 
-        return Response.ok().build();
+        final String developFactoryUrl = getFactoryUrl(storedDevelopFactory);
+        final String reviewFactoryUrl = getFactoryUrl(storedReviewFactory);
+
+        // Push factory URLs to VSTS project settings storage
+        vstsConnection.storeFactorySetting(host, account, collection, apiVersion, credentials, developSettingKey, developFactoryUrl);
+        vstsConnection.storeFactorySetting(host, account, collection, apiVersion, credentials, reviewSettingKey, reviewFactoryUrl);
+
+        // Create/update 'pull request updated' webhook that contains Develop & Review factories
+        final Optional<PullRequestUpdatedWebhook> pruWebhook = getPullRequestUpdatedWebhook(host, account, collection);
+        if (pruWebhook.isPresent()) {
+            final PullRequestUpdatedWebhook pruW = pruWebhook.get();
+            pruW.addFactoryId(storedDevelopFactory.getId());
+            pruW.addFactoryId(storedReviewFactory.getId());
+            storePullRequestUpdatedWebhook(pruW);
+        } else {
+            storePullRequestUpdatedWebhook(
+                    new PullRequestUpdatedWebhook(host, account, collection, apiVersion, credentials, storedDevelopFactory.getId(),
+                                                  storedReviewFactory.getId()));
+        }
     }
 
     /**
-     * Build a new factory for a VSTS work item based on the Team Project parent factory and save it
+     * Handle VSTS {@link PullRequestUpdatedEvent}
+     *
+     * @param pullRequestUpdatedEvent
+     *         the pull request creation event to handle
+     * @return HTTP 200 response if event was processed successfully
+     * HTTP 202 response if event was processed partially
+     * @throws ServerException
+     */
+    private void handlePullRequestUpdatedEvent(PullRequestUpdatedEvent pullRequestUpdatedEvent) throws ServerException {
+        LOG.debug("{}", pullRequestUpdatedEvent);
+
+        // Set current Codenvy user
+        if (EnvironmentContext.getCurrent().getUser() == null) {
+            EnvironmentContext.getCurrent().setUser(new TokenUser());
+        }
+
+        // Get event data
+        final String prStatus = pullRequestUpdatedEvent.getResource().getStatus();
+        final String prMergeStatus = pullRequestUpdatedEvent.getResource().getMergeStatus();
+
+        // Check that PR is completed and commits merged
+        if ("completed".equals(prStatus) && "succeeded".equals(prMergeStatus)) {
+
+            // Get event source data
+            final String repositoryIdUrl = pullRequestUpdatedEvent.getResource().getRepository().getUrl();
+
+            final String[] sourceBranchSplit = pullRequestUpdatedEvent.getResource().getSourceRefName().split("/");
+            final String sourceBranch = sourceBranchSplit[sourceBranchSplit.length - 1];
+
+            final String headCommitId = pullRequestUpdatedEvent.getResource().getLastMergeSourceCommit().getCommitId();
+
+            // Get VSTS data from repository URL
+            // URL to parse: 'https://{account}.{host}.com/{collection}/_apis/git/repositories/{repositoryId}'
+            final String collectionUrl = repositoryIdUrl.split("/_apis/git/repositories/")[0];
+            LOG.debug("collectionUrl: {}", collectionUrl);
+            final String[] collectionUrlSplit = collectionUrl.split("/");
+            final String collection = collectionUrlSplit[collectionUrlSplit.length - 1];
+
+            final String[] hostSplit = collectionUrlSplit[2].split("\\.");
+            final String account = hostSplit[0];
+            final String host = hostSplit[1];
+
+            // Get VSTS 'pull request merged' webhook configured for given host, account and collection
+            final Optional<PullRequestUpdatedWebhook> webhook  = getPullRequestUpdatedWebhook(host, account, collection);
+
+            final PullRequestUpdatedWebhook w = webhook.orElseThrow(() -> new ServerException(
+                    "No 'pull request updated' webhook configured for host " + host + ", account " + account + " and collection " +
+                    collection));
+
+            // Get factory id's listed into the webhook
+            final Set<String> factoryIDs = w.getFactoriesIds();
+
+            // Get repository named URL
+            final String apiVersion = w.getApiVersion();
+            final Pair<String, String> credentials = w.getCredentials();
+            final String repositoryNameUrl = vstsConnection.getRepositoryNameUrl(repositoryIdUrl, apiVersion, credentials);
+
+            // Get factories that contain a project for given repository and branch
+            final List<Factory> factories = getFactoriesForRepositoryAndBranch(factoryIDs, repositoryNameUrl, sourceBranch);
+            if (factories.isEmpty()) {
+                LOG.error("No factory found for branch {}", sourceBranch);
+                throw new ServerException("No factory found for branch " + sourceBranch);
+            }
+
+            for (Factory f : factories) {
+                // Update project into the factory with given repository and branch
+                final Factory updatedfactory =
+                        updateProjectInFactory(f, repositoryNameUrl, sourceBranch, headCommitId);
+
+                // Persist updated factory
+                updateFactory(updatedfactory);
+
+                // Remove factory id from webhook
+                w.removeFactoryId(f.getId());
+            }
+
+            // Update 'pull request merged' webhook configured in properties file
+            storePullRequestUpdatedWebhook(w);
+        }
+    }
+
+    /**
+     * Create a new factory for a VSTS work item based on the Team Project parent factory and save it
      *
      * @param parentFactory
      *         the parent factory to base the new factory on
      * @param factoryType
-     *         'develop' or 'review'
-     * @param projectName
-     *         the name of the VSTS Team Project
+     *         'DEVELOP' or 'REVIEW'
      * @param workItemId
      *         the id of the VSTS work item
      * @return
      *  the new created factory
      * @throws ServerException
      */
-    private Factory buildAndSaveWorkItemFactory(final Factory parentFactory, final String factoryType, final String projectName,
-                                                final String workItemId)
+    private Factory createFactoryForWorkItem(final Factory parentFactory, final FactoryType factoryType, final String workItemId)
             throws ServerException {
-        final String createPolicy = ("develop".equals(factoryType) ? "perUser" : "perClick");
+        final Factory newFactory = DtoFactory.cloneDto(parentFactory);
+
+        final String createPolicy = ((DEVELOP == factoryType) ? "perUser" : "perClick");
         Policies policies;
         if (parentFactory.getPolicies() == null) {
             policies = DtoFactory.newDto(Policies.class).withCreate(createPolicy);
         } else {
             policies = parentFactory.getPolicies().withCreate(createPolicy);
         }
-        final Factory newFactory =
-                parentFactory.withPolicies(policies).withName(projectName + "-" + workItemId + "-" + factoryType + "-factory");
+        newFactory.setPolicies(policies);
 
-        // Generate factory
-        return factoryConnection.saveFactory(newFactory);
+        final String projectName = parentFactory.getName();
+        newFactory.setName(projectName + "-" + workItemId + "-" + factoryType.toString() + "-factory");
+        newFactory.setCreator(null);
+        newFactory.setId(null);
+
+        Map<String, String> projectSourceParameters = newFactory.getWorkspace().getProjects().get(0).getSource().getParameters();
+        projectSourceParameters.put("branch", projectName + "-" + workItemId);
+
+        return newFactory;
     }
 
     /**
-     * Send a factory link as a project setting to VSTS extension storage
+     * Get factory URL
      *
-     * @param projectApiUrl
-     *         the API URL of the VSTS Team Project
-     * @param apiVersion
-     *         the version of the VSTS API to use
-     * @param vstsCredentials
-     *         the VSTS credentials to use against the VSTS API
      * @param factory
-     *         the factory from which link will be sent
-     * @param storageKey
-     *         the name of the project setting key to use
-     * @throws ServerException
+     *         the factory to get link from
+     * @return the factory 'open factory' URL
      */
-    private void storeFactoryLinkOnVSTS(final String projectApiUrl, final String apiVersion, final Pair<String, String> vstsCredentials,
-                                        final Factory factory, final String storageKey) throws ServerException {
-        String extensionStorageUrl = buildVSTSExtensionStorageUrl(projectApiUrl);
-
-        // Get 'open factory' URL
-        final Optional<Link> factoryLink = Optional.ofNullable(factory.getLink(FACTORY_URL_REL));
-        if (!factoryLink.isPresent()) {
+    private String getFactoryUrl(final Factory factory) throws ServerException {
+        final Link factoryLink = factory.getLink(FACTORY_URL_REL);
+        if (factoryLink == null) {
             throw new ServerException("Factory " + factory.getName() + " do not contain mandatory \'" + FACTORY_URL_REL + "\' link");
         }
-        final Link link = factoryLink.get();
-
-        // Create document to store
-        final VSTSDocument document = DtoFactory.newDto(VSTSDocument.class).withId(storageKey).withValue(link.getHref()).withEtag("-1");
-
-        final String userCredentials = vstsCredentials.first + ":" + vstsCredentials.second;
-        final String basicAuth = "Basic " + new String(Base64.getEncoder().encode(userCredentials.getBytes()));
-
-        HttpJsonRequest httpJsonRequest =
-                httpJsonRequestFactory.fromUrl(extensionStorageUrl).usePutMethod().setBody(document).setAuthorizationHeader(basicAuth)
-                                      .addQueryParam("api-version", apiVersion);
-        VSTSDocument newDocument;
-        try {
-            HttpJsonResponse response = httpJsonRequest.request();
-            newDocument = response.asDto(VSTSDocument.class);
-            LOG.debug("Factory URL stored on VSTS: {}", newDocument);
-
-        } catch (IOException | ApiException e) {
-            LOG.error(e.getLocalizedMessage(), e);
-            throw new ServerException(e.getLocalizedMessage());
-        }
+        return factoryLink.getHref();
     }
 
     /**
-     * Build VSTS extension storage URL
+     * Get configured 'work item created' webhook for given account, host and collection
      *
-     * @param projectApiUrl
-     *         the API URL of a VSTS Team Project
-     * @return the VSTS extension storage URL
-     */
-    private String buildVSTSExtensionStorageUrl(final String projectApiUrl) {
-        //https://vsts-test.visualstudio.com/DefaultCollection/_apis
-        //https://vsts-test.extmgmt.visualstudio.com/DefaultCollection/_apis
-        final String[] s = projectApiUrl.split("visualstudio");
-        return s[0] + "extmgmt.visualstudio" + s[1] +
-               "/ExtensionManagement/InstalledExtensions/codenvy/codenvy-extension/Data/Scopes/Default/Current/Collections/%24settings/Documents";
-    }
-
-    /**
-     * Get webhook configured for a given VSTS Team Project
-     *
-     * @param projectApiURL
-     *         the API URL of the Team Project
-     * @return the webhook configured for the Team Project or null if no webhook is configured for this Team Project
+     * @param host
+     *         the VSTS host
+     * @param account
+     *         the VSTS account
+     * @param collection
+     *         the VSTS collection
+     * @return the webhook configured for given account, host and collection or null if no webhook is configured
      * @throws ServerException
      */
-    private VSTSWebhook getVSTSWebhook(String projectApiURL) throws ServerException {
-        List<VSTSWebhook> webhooks = getVSTSWebhooks();
-        VSTSWebhook webhook = null;
-        for (VSTSWebhook w : webhooks) {
-            String webhookProjectApiURL = w.getProjectApiURL();
-            if (projectApiURL.equals(webhookProjectApiURL)) {
+    private Optional<WorkItemCreatedWebhook> getWorkItemCreatedWebhook(final String host, final String account, final String collection)
+            throws ServerException {
+        final List webhooks = getVSTSWebhooks(WORK_ITEM_CREATED_WEBHOOK);
+        WorkItemCreatedWebhook webhook = null;
+        for (Object o : webhooks) {
+            final WorkItemCreatedWebhook w = (WorkItemCreatedWebhook)o;
+            final String webhookHost = w.getHost();
+            final String webhookAccount = w.getAccount();
+            final String webhookCollection = w.getCollection();
+            if (host.equals(webhookHost) && account.equals(webhookAccount) && collection.equals(webhookCollection)) {
                 webhook = w;
+                break;
             }
         }
-        return webhook;
+        return Optional.ofNullable(webhook);
     }
 
     /**
-     * Get all configured webhooks
+     * Get configured 'pull request updated' webhook for given account, host and collection
      *
-     * VSTS webhook: [webhook-name]=[webhook-type],[api-version],[project-api-url],[username],[password]
-     *
-     * @return the list of all webhooks contained in VSTS_WEBHOOKS_PROPERTIES_FILENAME properties fil
+     * @param host
+     *         the VSTS host
+     * @param account
+     *         the VSTS account
+     * @param collection
+     *         the VSTS collection
+     * @return the webhook configured for given account, host and collection or null if no webhook is configured
+     * @throws ServerException
      */
-    private static List<VSTSWebhook> getVSTSWebhooks() throws ServerException {
-        List<VSTSWebhook> webhooks = new ArrayList<>();
+    private Optional<PullRequestUpdatedWebhook> getPullRequestUpdatedWebhook(final String host, final String account, final String collection)
+            throws ServerException {
+        final List webhooks = getVSTSWebhooks(PULL_REQUEST_UPDATED_WEBHOOK);
+        PullRequestUpdatedWebhook webhook = null;
+        for (Object o : webhooks) {
+            final PullRequestUpdatedWebhook w = (PullRequestUpdatedWebhook)o;
+            final String webhookHost = w.getHost();
+            final String webhookAccount = w.getAccount();
+            final String webhookCollection = w.getCollection();
+            if (host.equals(webhookHost) && account.equals(webhookAccount) && collection.equals(webhookCollection)) {
+                webhook = w;
+                break;
+            }
+        }
+        return Optional.ofNullable(webhook);
+    }
+
+    /**
+     * Get configured VSTS webhooks of given type
+     *
+     * @param webhookType
+     *         WORK_ITEM_CREATED_WEBHOOK or PULL_REQUEST_UPDATED_WEBHOOK
+     * @return the list of webhooks of given type contained in VSTS_WEBHOOKS_PROPERTIES_FILENAME properties file
+     */
+    private static List getVSTSWebhooks(final VSTSWebhookType webhookType) throws ServerException {
         Properties webhooksProperties = getProperties(VSTS_WEBHOOKS_PROPERTIES_FILENAME);
         Set<String> keySet = webhooksProperties.stringPropertyNames();
-        keySet.stream().forEach(key -> {
-            String value = webhooksProperties.getProperty(key);
-            String[] valueSplit = value.split(",");
-            switch (valueSplit[0]) {
-                case "vsts":
-                    VSTSWebhook webhook = new VSTSWebhook(valueSplit[1], valueSplit[2], Pair.of(valueSplit[3], valueSplit[4]));
-                    webhooks.add(webhook);
-                    LOG.debug("new VSTSWebhook({}, {}, {}, *******)", valueSplit[1], valueSplit[2], valueSplit[3]);
-                    break;
-                default:
-                    break;
-            }
-        });
-        return webhooks;
+
+        if (webhookType == WORK_ITEM_CREATED_WEBHOOK) {
+            List<WorkItemCreatedWebhook> wicWebhooks = new ArrayList<>();
+            keySet.stream().forEach(key -> {
+                String value = webhooksProperties.getProperty(key);
+                if (!isNullOrEmpty(value)) {
+                    String[] valueSplit = value.split(",");
+                    if (valueSplit.length == 7 &&
+                        valueSplit[0].equals(webhookType.toString())) {
+
+                        WorkItemCreatedWebhook webhook =
+                                new WorkItemCreatedWebhook(valueSplit[1], valueSplit[2], valueSplit[3], valueSplit[4],
+                                                           Pair.of(valueSplit[5], valueSplit[6]));
+                        wicWebhooks.add(webhook);
+                        LOG.debug("new WorkItemCreatedWebhook({})", value);
+                    }
+                }
+            });
+            return wicWebhooks;
+        }
+
+        if (webhookType == PULL_REQUEST_UPDATED_WEBHOOK) {
+            List<PullRequestUpdatedWebhook> pruWebhooks = new ArrayList<>();
+            keySet.stream().forEach(key -> {
+                String value = webhooksProperties.getProperty(key);
+                if (!isNullOrEmpty(value)) {
+                    String[] valueSplit = value.split(",");
+                    if (valueSplit.length >= 7
+                        && valueSplit[0].equals(webhookType.toString())) {
+
+                        final String[] factoriesIDs = (valueSplit.length == 8 ? valueSplit[7].split(";") : new String[0]);
+                        PullRequestUpdatedWebhook webhook =
+                                new PullRequestUpdatedWebhook(valueSplit[1], valueSplit[2], valueSplit[3], valueSplit[4],
+                                                              Pair.of(valueSplit[5], valueSplit[6]), factoriesIDs);
+                        pruWebhooks.add(webhook);
+                        LOG.debug("new PullRequestUpdatedWebhook({})", value);
+                    }
+                }
+            });
+            return pruWebhooks;
+        }
+
+        return new ArrayList();
+    }
+
+    /**
+     * Store a 'pull request updated' webhook in webhooks property file.
+     * If a webhook with same id already exist it will be replaced.
+     *
+     * @param pruWebhook
+     *          the webhook to store in webhooks property file
+     * @throws ServerException
+     */
+    private void storePullRequestUpdatedWebhook(final PullRequestUpdatedWebhook pruWebhook) throws ServerException {
+        final Set<String> factoriesIDs = pruWebhook.getFactoriesIds();
+        String propertyValue = String.format("%s,%s,%s,%s,%s,%s,%s",
+                                                   PULL_REQUEST_UPDATED_WEBHOOK.toString(),
+                                                   pruWebhook.getHost(),
+                                                   pruWebhook.getAccount(),
+                                                   pruWebhook.getCollection(),
+                                                   pruWebhook.getApiVersion(),
+                                                   pruWebhook.getCredentials().first,
+                                                   pruWebhook.getCredentials().second);
+
+        if (factoriesIDs.size() > 0) {
+            final String concatedFactoriesIDs = String.join(";", factoriesIDs);
+            propertyValue = propertyValue + "," + concatedFactoriesIDs;
+        }
+
+        storeProperty(pruWebhook.getId(), propertyValue, VSTS_WEBHOOKS_PROPERTIES_FILENAME);
     }
 }

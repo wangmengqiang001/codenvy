@@ -126,7 +126,7 @@ public class FactoryProjectImporter extends AbstractImporter {
      * Import source projects
      */
     private void importProjects() {
-        projectService.getProjects(workspaceId, false).then(new Operation<List<ProjectConfigDto>>() {
+        projectService.getProjects(workspaceId).then(new Operation<List<ProjectConfigDto>>() {
             @Override
             public void apply(List<ProjectConfigDto> projectConfigs) throws OperationException {
                 Set<String> projectNames = new HashSet<>();

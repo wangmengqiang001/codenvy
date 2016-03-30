@@ -18,6 +18,7 @@ package com.codenvy.user.interceptor;
 import com.codenvy.BaseInterceptorTest;
 import com.codenvy.mail.MailSenderClient;
 import com.codenvy.mail.shared.dto.EmailBeanDto;
+import com.codenvy.service.password.RecoveryStorage;
 
 import org.aopalliance.intercept.MethodInvocation;
 import org.eclipse.che.api.core.ConflictException;
@@ -30,6 +31,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -43,6 +45,8 @@ public class CreateUserInterceptorTest extends BaseInterceptorTest {
     private User                  user;
     @Mock
     private MethodInvocation      invocation;
+    @Mock
+    private RecoveryStorage       recoveryStorage;
     @InjectMocks
     private CreateUserInterceptor interceptor;
 
@@ -66,6 +70,7 @@ public class CreateUserInterceptorTest extends BaseInterceptorTest {
     public void shouldSendEmail() throws Throwable {
         when(invocation.getArguments()).thenReturn(new Object[] {user});
         when(user.getEmail()).thenReturn(recipient);
+        when(recoveryStorage.generateRecoverToken(anyString())).thenReturn("uuid");
         ArgumentCaptor<EmailBeanDto> argument = ArgumentCaptor.forClass(EmailBeanDto.class);
 
         interceptor.invoke(invocation);

@@ -450,7 +450,7 @@ public class ContributePartViewImpl extends BaseView<ContributePartView.ActionDe
         private final String      label;
 
         private StatusStep(final int index, final String label) {
-            final Label indexLabel = new Label(String.valueOf(index));
+            final Label indexLabel = new Label();
             final Label titleLabel = new Label(this.label = label);
             this.status = new SimplePanel();
 

@@ -15,44 +15,29 @@
 package com.codenvy.plugin.webhooks.vsts.shared;
 
 import org.eclipse.che.dto.shared.DTO;
-import org.eclipse.che.dto.shared.JsonFieldName;
 
 @DTO
-public interface VSTSDocument {
-
-    public String VSTS_DOCUMENT_ETAG = "__etag";
+public interface Commit {
 
     /**
-     * Get document id.
+     * Get commit id.
      *
-     * @return {@link String} id
+     * @return {@link String} commitId
      */
-    String getId();
+    String getCommitId();
 
-    void setId(final String id);
+    void setCommitId(final String commitId);
 
-    VSTSDocument withId(final String id);
+    Commit withCommitId(final String commitId);
 
     /**
-     * Get document etag.
+     * Get commit url.
      *
-     * @return {@link String} etag
+     * @return {@link String} url
      */
-    @JsonFieldName(VSTS_DOCUMENT_ETAG)
-    String getEtag();
+    String getUrl();
 
-    void setEtag(final String etag);
+    void setUrl(final String url);
 
-    VSTSDocument withEtag(final String etag);
-
-    /**
-     * Get document value.
-     *
-     * @return {@link String} value
-     */
-    String getValue();
-
-    void setValue(final String value);
-
-    VSTSDocument withValue(final String value);
+    Commit withUrl(final String url);
 }

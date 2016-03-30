@@ -164,13 +164,6 @@ public class UsersWorkspaceImplCodec implements Codec<UsersWorkspaceImpl> {
         projectConfig.setAttributes(attributes.stream()
                                               .collect(toMap(d -> d.getString("name"), d -> (List<String>)d.get("value"))));
 
-        final List<Document> modules = (List<Document>)document.get("modules");
-        if (modules != null) {
-            projectConfig.setModules(modules.stream()
-                                            .map(UsersWorkspaceImplCodec::asProjectConfig)
-                                            .collect(toList()));
-        }
-
         final Document sourceDocument = document.get("source", Document.class);
         if (sourceDocument != null) {
             final SourceStorageImpl storage = new SourceStorageImpl(sourceDocument.getString("type"),
@@ -187,11 +180,7 @@ public class UsersWorkspaceImplCodec implements Codec<UsersWorkspaceImpl> {
                                                 .append("type", project.getType())
                                                 .append("description", project.getDescription())
                                                 .append("mixins", project.getMixins())
-                                                .append("attributes", mapAsDocumentsList(project.getAttributes()))
-                                                .append("modules", project.getModules()
-                                                                          .stream()
-                                                                          .map(UsersWorkspaceImplCodec::asDocument)
-                                                                          .collect(toList()));
+                                                .append("attributes", mapAsDocumentsList(project.getAttributes()));
 
         final SourceStorage sourceStorage = project.getSource();
         if (sourceStorage != null) {

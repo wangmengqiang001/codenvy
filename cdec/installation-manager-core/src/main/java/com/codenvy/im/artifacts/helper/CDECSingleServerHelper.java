@@ -528,9 +528,25 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
                                           + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName)));  // add new host name to dns_alt_names
 
-        commands.add(createCommand("sudo systemctl restart puppetmaster"));
         commands.add(createCommand("sudo systemctl restart puppet"));
 
-        return new MacroCommand(commands, "Update puppet.conf commands");
+        // restart puppetmaster after puppet agent generates certificate for new certname=newHostName
+        commands.add(createCommand(format("while true; do\n"
+                                          + "  local COUNTER=0\n"
+                                          + "  sudo puppet cert list --all | grep '\"%s\"' &>/dev/null\n"
+                                          + "  hasCertificate=$?\n"
+                                          + "  if [[ $hasCertificate == 0 ]]; then\n"
+                                          + "     sudo systemctl restart puppetmaster\n"
+                                          + "     break\n"
+                                          + "  fi\n"
+                                          + "  sleep 10\n"
+                                          + "  let COUNTER=COUNTER+1\n"
+                                          + "  if [[ $COUNTER -eq 30 ]]; then\n"
+                                          + "     echo 'Puppet agent error' >&2\n"
+                                          + "     exit 1\n"
+                                          + "  fi\n"
+                                          + "done\n", newHostName)));
+
+        return new MacroCommand(commands, "Update puppet config commands");
     }
 }

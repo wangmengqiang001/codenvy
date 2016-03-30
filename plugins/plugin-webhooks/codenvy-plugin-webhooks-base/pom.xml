@@ -20,11 +20,15 @@
     <parent>
         <artifactId>codenvy-plugin-webhooks-parent</artifactId>
         <groupId>com.codenvy.plugin</groupId>
-        <version>4.0.0-RC14-SNAPSHOT</version>
+        <version>4.1.0-RC1-SNAPSHOT</version>
     </parent>
     <artifactId>codenvy-plugin-webhooks-base</artifactId>
     <name>Codenvy Plugin :: Webhooks :: Base</name>
     <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
@@ -52,6 +56,10 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-user</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-workspace</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>

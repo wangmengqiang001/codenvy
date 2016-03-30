@@ -24,25 +24,29 @@ export class FactoryConfigurationCtrl {
    * Default constructor that is using resource injection
    * @ngInject for Dependency injection
    */
-  constructor($route, $scope, $filter, codenvyAPI, cheNotification) {
+  constructor($route, $scope, $timeout, $filter, codenvyAPI, cheNotification) {
+    this.$timeout = $timeout;
     this.$filter = $filter;
     this.codenvyAPI = codenvyAPI;
     this.cheNotification = cheNotification;
 
     this.factoryId = $route.current.params.id;
 
-    var ctrl = this;
-
-    $scope.$watch('factoryConfigurationCtrl.factory.originFactory', function (newOriginFactory) {
-      if (!newOriginFactory) {
-        return;
-      }
-      ctrl.updateFactoryContent(newOriginFactory);
+    $scope.$watch(() => {
+      return this.factory ? this.factory.originFactory : null;
+    }, (originFactory) => {
+      this.$timeout(() => {
+        this.updateFactoryContent(originFactory);
+      }, 1000);
     });
   }
 
   //Update the factory content from origin factory.
   updateFactoryContent(originFactory) {
+    if (!originFactory) {
+      return;
+    }
+
     let copyOriginFactory = angular.copy(originFactory);
 
     if (copyOriginFactory.links) {
@@ -58,9 +62,6 @@ export class FactoryConfigurationCtrl {
     let promise = this.codenvyAPI.getFactory().fetchFactory(factoryId);
 
     promise.then((factory) => {
-      if (factory.originFactory) {
-        this.updateFactoryContent(factory.originFactory);
-      }
       this.factory = factory;
       this.cheNotification.showInfo('Factory information successfully updated.');
     }, (error) => {

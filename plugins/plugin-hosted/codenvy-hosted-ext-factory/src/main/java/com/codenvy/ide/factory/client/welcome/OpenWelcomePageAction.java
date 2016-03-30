@@ -14,7 +14,6 @@
  */
 package com.codenvy.ide.factory.client.welcome;
 
-import org.eclipse.che.api.analytics.client.logger.AnalyticsEventLogger;
 import org.eclipse.che.ide.api.action.Action;
 import org.eclipse.che.ide.api.action.ActionEvent;
 import org.eclipse.che.ide.util.loging.Log;
@@ -26,18 +25,14 @@ import javax.inject.Inject;
  */
 public class OpenWelcomePageAction extends Action {
     private final GreetingPartPresenter greetingPart;
-    private final AnalyticsEventLogger  eventLogger;
 
     @Inject
-    public OpenWelcomePageAction(GreetingPartPresenter greetingPart, AnalyticsEventLogger eventLogger) {
+    public OpenWelcomePageAction(GreetingPartPresenter greetingPart) {
         this.greetingPart = greetingPart;
-        this.eventLogger = eventLogger;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        eventLogger.log(this);
-
         if (e.getParameters() == null) {
             Log.error(getClass(), "Can't show welcome page without parameters");
             return;

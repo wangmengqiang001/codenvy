@@ -20,7 +20,6 @@ import com.codenvy.ide.factory.client.configure.CreateFactoryPresenter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.eclipse.che.api.analytics.client.logger.AnalyticsEventLogger;
 import org.eclipse.che.api.factory.gwt.client.FactoryServiceClient;
 import org.eclipse.che.ide.api.action.AbstractPerspectiveAction;
 import org.eclipse.che.ide.api.action.ActionEvent;
@@ -37,26 +36,22 @@ import static org.eclipse.che.ide.workspace.perspectives.project.ProjectPerspect
 public class CreateFactoryAction extends AbstractPerspectiveAction {
 
     private final CreateFactoryPresenter      presenter;
-    private final AnalyticsEventLogger        eventLogger;
     private final FactoryServiceClient        factoryService;
     private final FactoryLocalizationConstant locale;
 
     @Inject
     public CreateFactoryAction(CreateFactoryPresenter presenter,
-                               AnalyticsEventLogger eventLogger,
                                FactoryResources resources,
                                FactoryLocalizationConstant locale,
                                FactoryServiceClient factoryService) {
         super(Collections.singletonList(PROJECT_PERSPECTIVE_ID), locale.createFactoryActionTitle(), null, null, null);
         this.presenter = presenter;
-        this.eventLogger = eventLogger;
         this.factoryService = factoryService;
         this.locale = locale;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        eventLogger.log(this);
         presenter.showDialog();
     }
 

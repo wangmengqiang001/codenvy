@@ -34,8 +34,7 @@ import java.util.Map;
 public class OnPremisesIdeApiServletModule extends ServletModule {
     @Override
     protected void configureServlets() {
-        filter("/vfs/*",
-               "/project/*",
+        filter("/project/*",
                "/maven/*",
                "/ws/*",
                "/code-assistant-java/*",
@@ -93,7 +92,6 @@ public class OnPremisesIdeApiServletModule extends ServletModule {
                "/admin/plan",
                "/project/*",
                "/maven/*",
-               "/vfs/*",
                "/ws/*",
                "/appengine/*",
                "/gae-validator/*",

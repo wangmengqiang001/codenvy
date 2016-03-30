@@ -12,7 +12,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.factory.storage.mongo;
+package com.codenvy.api.dao.mongo;
 
 import com.github.fakemongo.Fongo;
 import com.mongodb.BasicDBObjectBuilder;
@@ -471,9 +471,9 @@ public class MongoDBFactoryStoreTest {
     public void shouldEncodedDot() {
         String original = "hello.my.string";
         String encoded = store.encode(original);
-        Assert.assertEquals("hello" + MongoDBFactoryStore.ESCAPED_DOT + "my" + MongoDBFactoryStore.ESCAPED_DOT + "string", encoded);
+        assertEquals(encoded, "hello" + MongoDBFactoryStore.ESCAPED_DOT + "my" + MongoDBFactoryStore.ESCAPED_DOT + "string");
         String decoded = store.decode(encoded);
-        Assert.assertEquals(original, decoded);
+        assertEquals(original, decoded);
     }
 
     /**
@@ -483,9 +483,9 @@ public class MongoDBFactoryStoreTest {
     public void shouldEncodedDollar() {
         String original = "hello$my$string";
         String encoded = store.encode(original);
-        Assert.assertEquals("hello" + MongoDBFactoryStore.ESCAPED_DOLLAR + "my" + MongoDBFactoryStore.ESCAPED_DOLLAR + "string", encoded);
+        assertEquals("hello" + MongoDBFactoryStore.ESCAPED_DOLLAR + "my" + MongoDBFactoryStore.ESCAPED_DOLLAR + "string", encoded);
         String decoded = store.decode(encoded);
-        Assert.assertEquals(original, decoded);
+        assertEquals(original, decoded);
     }
 
     /**
@@ -495,9 +495,9 @@ public class MongoDBFactoryStoreTest {
     public void shouldEncodedDotDollar() {
         String original = "hello.my$string";
         String encoded = store.encode(original);
-        Assert.assertEquals("hello" + MongoDBFactoryStore.ESCAPED_DOT + "my" + MongoDBFactoryStore.ESCAPED_DOLLAR + "string", encoded);
+        assertEquals("hello" + MongoDBFactoryStore.ESCAPED_DOT + "my" + MongoDBFactoryStore.ESCAPED_DOLLAR + "string", encoded);
         String decoded = store.decode(encoded);
-        Assert.assertEquals(original, decoded);
+        assertEquals(original, decoded);
     }
 
 }

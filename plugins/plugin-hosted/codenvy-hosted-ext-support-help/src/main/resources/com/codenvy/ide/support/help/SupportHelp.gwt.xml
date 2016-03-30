@@ -17,9 +17,6 @@
 -->
 <module>
     <inherits name="com.google.gwt.inject.Inject"/>
-
-    <inherits name='org.eclipse.che.api.Analytics'/>
-
     <inherits name="org.eclipse.che.ide.Api"/>
     <inherits name="com.codenvy.api.Subscription"/>
 

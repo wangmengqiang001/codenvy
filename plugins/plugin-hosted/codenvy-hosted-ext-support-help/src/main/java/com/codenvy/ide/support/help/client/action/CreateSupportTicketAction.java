@@ -14,12 +14,12 @@
  */
 package com.codenvy.ide.support.help.client.action;
 
-import org.eclipse.che.api.analytics.client.logger.AnalyticsEventLogger;
-import org.eclipse.che.ide.api.action.Action;
-import org.eclipse.che.ide.api.action.ActionEvent;
 import com.codenvy.ide.support.help.client.HelpLocalizationConstant;
 import com.codenvy.ide.support.help.client.HelpResources;
 import com.google.inject.Inject;
+
+import org.eclipse.che.ide.api.action.Action;
+import org.eclipse.che.ide.api.action.ActionEvent;
 
 
 /**
@@ -29,21 +29,17 @@ import com.google.inject.Inject;
  */
 public class CreateSupportTicketAction extends Action {
 
-    private final AnalyticsEventLogger eventLogger;
 
     @Inject
-    public CreateSupportTicketAction(AnalyticsEventLogger eventLogger,
-                                     HelpLocalizationConstant locale,
+    public CreateSupportTicketAction(HelpLocalizationConstant locale,
                                      HelpResources resources) {
         super(locale.actionCreateSupportTicketDescription(), locale.actionCreateSupportTicketTitle(), null, resources.createTicket());
-        this.eventLogger = eventLogger;
     }
 
 
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent e) {
-        eventLogger.log(this);
         showWidget();
     }
 

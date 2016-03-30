@@ -20,25 +20,34 @@ import com.codenvy.plugin.webhooks.connectors.JenkinsConnector;
 import org.eclipse.che.api.auth.shared.dto.Token;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
+import org.eclipse.che.api.factory.shared.dto.Factory;
+import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.commons.lang.Pair;
 import org.eclipse.che.commons.user.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Webhooks handler
  *
  * @author Stephane Tournie
  */
-public class BaseWebhookService extends Service {
+public abstract class BaseWebhookService extends Service {
 
     private static final Logger LOG                             = LoggerFactory.getLogger(BaseWebhookService.class);
     private static final String CONNECTORS_PROPERTIES_FILENAME  = "connectors.properties";
@@ -47,9 +56,109 @@ public class BaseWebhookService extends Service {
     protected static final String FACTORY_URL_REL = "accept-named";
 
     private final AuthConnection authConnection;
+    private final FactoryConnection factoryConnection;
 
-    public BaseWebhookService(final AuthConnection authConnection) {
+    public BaseWebhookService(final AuthConnection authConnection, final FactoryConnection factoryConnection) {
         this.authConnection = authConnection;
+        this.factoryConnection = factoryConnection;
+    }
+
+    /**
+     * Get factories that contain a project for given repository and branch
+     *
+     * @param factoryIDs
+     *         the set of id's of factories to check
+     * @param headRepositoryUrl
+     *         repository that factory project must match
+     * @param headBranch
+     *         branch that factory project must match
+     * @return list of factories that contain a project for given repository and branch
+     */
+    protected List<Factory> getFactoriesForRepositoryAndBranch(final Set<String> factoryIDs, final String headRepositoryUrl,
+                                                               final String headBranch) throws ServerException {
+        List<Factory> factories = new ArrayList<>();
+        for (String factoryID : factoryIDs) {
+            factories.add(factoryConnection.getFactory(factoryID));
+        }
+
+        return factories.stream()
+                        .filter(f -> (f != null)
+                                     && (f.getWorkspace().getProjects()
+                                           .stream()
+                                           .anyMatch(p -> isProjectMatching(p, headRepositoryUrl, headBranch))))
+                        .collect(toList());
+    }
+
+    /**
+     * Update project matching given predicate in given factory
+     *
+     * @param factory
+     *         the factory to search for projects
+     * @param headRepositoryUrl
+     *         the URL of the repository that a project into the factory is configured with
+     * @param headBranch
+     *         the name of the branch that a project into the factory is configured with
+     * @param baseRepositoryUrl
+     *         the repository URL to set as source location for matching project in factory
+     * @param headCommitId
+     *         the commitId to set as 'commitId' parameter for matching project in factory
+     * @return the project that matches the predicate given in argument
+     * @throws ServerException
+     */
+    protected Factory updateProjectInFactory(final Factory factory,
+                                             final String headRepositoryUrl,
+                                             final String headBranch,
+                                             final String baseRepositoryUrl,
+                                             final String headCommitId) throws ServerException {
+        // Get projects in factory
+        final List<ProjectConfigDto> factoryProjects = factory.getWorkspace().getProjects();
+
+        factoryProjects.stream()
+                       .filter(project -> isProjectMatching(project, headRepositoryUrl, headBranch))
+                       .forEach(project -> {
+                           // Update repository and commitId
+                           final SourceStorageDto source = project.getSource();
+                           final Map<String, String> projectParams = source.getParameters();
+                           source.setLocation(baseRepositoryUrl);
+                           projectParams.put("commitId", headCommitId);
+
+                           // Clean branch parameter if exist
+                           projectParams.remove("branch");
+
+                           source.setParameters(projectParams);
+                       });
+
+        return factory;
+    }
+
+    /**
+     * Update project matching given predicate in given factory
+     *
+     * @param factory
+     *         the factory to search for projects
+     * @param repositoryUrl
+     *         the repository URL that a project into the factory is configured with
+     * @param headBranch
+     *         the name of the branch that a project into the factory is configured with
+     * @param headCommitId
+     *         the commitId to set as 'commitId' parameter for matching project in factory
+     * @return the project that matches the predicate given in argument
+     * @throws ServerException
+     */
+    protected Factory updateProjectInFactory(final Factory factory, final String repositoryUrl, final String headBranch,
+                                             final String headCommitId) throws ServerException {
+        return updateProjectInFactory(factory, repositoryUrl, headBranch, repositoryUrl, headCommitId);
+    }
+
+    protected void updateFactory(final Factory factory) throws ServerException {
+        final Factory persistedFactory = factoryConnection.updateFactory(factory);
+
+        if (persistedFactory == null) {
+            throw new ServerException(
+                    String.format("Error during update of factory with id %s and name %s", factory.getId(), factory.getName()));
+        }
+
+        LOG.debug("Factory with id {} and name {} successfully updated", persistedFactory.getId(), persistedFactory.getName());
     }
 
     /**
@@ -117,7 +226,7 @@ public class BaseWebhookService extends Service {
      * @return the {@link Properties} contained in the given file or null if the file contains no properties
      * @throws ServerException
      */
-    protected static Properties getProperties(String fileName) throws ServerException {
+    protected static Properties getProperties(final String fileName) throws ServerException {
         String filePath = Paths.get(fileName).toAbsolutePath().toString();
         Properties properties = new Properties();
         try (FileInputStream in = new FileInputStream(filePath)) {
@@ -129,6 +238,74 @@ public class BaseWebhookService extends Service {
         return properties;
     }
 
+    /**
+     * Store given key/value in given file
+     *
+     * @param propertyKey
+     *         the key of the property to store
+     * @param propertyValue
+     *         the value of the property to store
+     * @param fileName
+     *         the name of the properties file
+     * @throws ServerException
+     */
+    protected static void storeProperty(final String propertyKey, final String propertyValue, final String fileName) throws ServerException {
+        String filePath = Paths.get(fileName).toAbsolutePath().toString();
+        Properties properties = new Properties();
+        try (FileInputStream in = new FileInputStream(filePath)) {
+            properties.load(in);
+        } catch (IOException e) {
+            LOG.error(e.getLocalizedMessage());
+            throw new ServerException(e.getLocalizedMessage());
+        }
+        try (FileOutputStream out = new FileOutputStream(fileName)) {
+            properties.setProperty(propertyKey, propertyValue);
+            properties.store(out, null);
+        } catch (IOException e) {
+            LOG.error(e.getLocalizedMessage());
+            throw new ServerException(e.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * Whether or not a given project matches given repository and branch
+     *
+     * @param project
+     *         the project to check
+     * @param repositoryUrl
+     *         the repo that the project source location has to match
+     * @param branch
+     *         the branch that the project has to match
+     * @return the {@link java.util.function.Predicate} that matches relevant project(s)
+     */
+    private boolean isProjectMatching(final ProjectConfigDto project, final String repositoryUrl, final String branch) {
+
+        if (isNullOrEmpty(repositoryUrl) || isNullOrEmpty(branch)) {
+            return false;
+        }
+
+        final SourceStorageDto source = project.getSource();
+        if (source == null) {
+            return false;
+        }
+
+        final String projectType = source.getType();
+        final String projectLocation = source.getLocation();
+        final String projectBranch = source.getParameters().get("branch");
+
+        if (isNullOrEmpty(projectType) || isNullOrEmpty(projectLocation)) {
+            return false;
+        }
+        return (repositoryUrl.equals(projectLocation)
+                || (repositoryUrl + ".git").equals(projectLocation))
+               && ("master".equals(branch)
+                   || (!isNullOrEmpty(projectBranch)
+                       && branch.equals(projectBranch)));
+    }
+
+    /**
+     * A user that only provides a token based on credentials configured in a property file
+     */
     protected class TokenUser implements User {
 
         private final Token token;

@@ -39,14 +39,12 @@
         {{factoryItemCtrl.factory.idURL ? factoryItemCtrl.factory.idURL : factoryItemCtrl.factory.originFactory.id}}
       </div>
     </div>
-    <div flex="10" class="factory-details" layout-align="center center">
+    <div flex="20" class="factory-details" layout-align="center center">
       <span tooltip="Created: {{factoryItemCtrl.factory.originFactory.creator.created | amDateFormat:'dddd, MMMM Do, YYYY'}}"
             am-time-ago="factoryItemCtrl.factory.originFactory.creator.created"></span>
     </div>
-    <div flex="10" class="factory-details" layout-align="center center">
-      <span class="codenvy-hover" tooltip="Number of views">{{factoryItemCtrl.factory.views}} views</span>
-    </div>
-    <a ng-href="{{factoryItemCtrl.factory.idURL}}" flex="20" target="_blank"  layout="row" layout-align="center center" layout-align-gt-sm="end center">
+    <a ng-href="{{factoryItemCtrl.factory.idURL}}" flex="20" target="_blank" layout="row" layout-align="center center"
+       layout-align-gt-sm="end center">
       <che-button-default ng-show="hover" class="factory-list-details-arrow"
                           che-button-icon="fa fa fa-chevron-circle-right"
                           che-button-title="Open in IDE"></che-button-default>

@@ -17,6 +17,7 @@ package com.codenvy.user.interceptor;
 import com.codenvy.mail.MailSenderClient;
 import com.codenvy.mail.shared.dto.AttachmentDto;
 import com.codenvy.mail.shared.dto.EmailBeanDto;
+import com.codenvy.service.password.RecoveryStorage;
 import com.google.common.io.Files;
 
 import org.aopalliance.intercept.MethodInterceptor;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.ws.rs.core.UriBuilder;
 import java.io.File;
 import java.net.URL;
 import java.util.Base64;
@@ -65,6 +67,9 @@ public class CreateUserInterceptor implements MethodInterceptor {
     private MailSenderClient mailSenderClient;
 
     @Inject
+    private RecoveryStorage recoveryStorage;
+
+    @Inject
     @Named("api.endpoint")
     private String apiEndpoint;
 
@@ -81,10 +86,18 @@ public class CreateUserInterceptor implements MethodInterceptor {
             String template = isUserCreatedByAdmin() ? EMAIL_TEMPLATE_USER_CREATED_WITH_PASSWORD
                                                      : EMAIL_TEMPLATE_USER_CREATED_WITHOUT_PASSWORD;
 
+            String uuid = recoveryStorage.generateRecoverToken(user.getEmail());
+
+            UriBuilder resetPasswordLinkUriBuilder = UriBuilder.fromUri(urlEndpoint.getProtocol() + "://" + urlEndpoint.getHost())
+                                                               .path("site/setup-password")
+                                                               .queryParam("id", uuid);
+            String resetPasswordLink = resetPasswordLinkUriBuilder.build(user.getEmail()).toString();
+
             Map<String, String> properties = new HashMap<>();
             properties.put("logo.cid", "codenvyLogo");
-            properties.put("username", user.getName());
-            properties.put("password", user.getPassword());
+            properties.put("user.name", user.getName());
+            properties.put("user.mail", user.getEmail());
+            properties.put("setup.password.link", resetPasswordLink);
             properties.put("com.codenvy.masterhost.url", urlEndpoint.getProtocol() + "://" + urlEndpoint.getHost());
 
             File logo = new File(this.getClass().getResource(LOGO).getPath());

@@ -14,53 +14,48 @@
  */
 package com.codenvy.ide.hosted.client.informers;
 
-import com.codenvy.ide.hosted.client.login.PromptToLoginView;
 import com.codenvy.ide.hosted.client.HostedLocalizationConstant;
-import com.google.gwt.user.client.Window;
+import com.codenvy.ide.hosted.client.notifier.BadConnectionNotifierView;
 import com.google.inject.Inject;
 
 import org.eclipse.che.ide.api.ConnectionClosedInformer;
 import org.eclipse.che.ide.websocket.events.WebSocketClosedEvent;
 
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_ABNORMAL;
-import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_NORMAL;
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_FAILURE_TLS_HANDSHAKE;
+import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_GOING_AWAY;
+import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_INCONSISTENT_DATA;
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_NEGOTIATE_EXTENSION;
+import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_NORMAL;
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_NO_STATUS;
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_PROTOCOL_ERROR;
+import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_TOO_LARGE;
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_UNEXPECTED_CONDITION;
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_UNSUPPORTED;
-import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_TOO_LARGE;
-import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_INCONSISTENT_DATA;
-import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_GOING_AWAY;
 import static org.eclipse.che.ide.websocket.events.WebSocketClosedEvent.CLOSE_VIOLATE_POLICY;
 
 /**
  * Notify that WebSocket connection was closed.
  *
  * @author Roman Nikitenko
+ * @author Anton Korneta
  */
 public class HostedEnvConnectionClosedInformer implements ConnectionClosedInformer {
 
-    private PromptToLoginView          promptToLoginView;
+    private BadConnectionNotifierView  badConnectionInfoView;
     private HostedLocalizationConstant localizationConstant;
 
     @Inject
-    HostedEnvConnectionClosedInformer(PromptToLoginView promptToLoginView,
-                                      HostedLocalizationConstant localizationConstant) {
-        this.promptToLoginView = promptToLoginView;
+    HostedEnvConnectionClosedInformer(final BadConnectionNotifierView badConnectionInfoView,
+                                      final HostedLocalizationConstant localizationConstant) {
+        this.badConnectionInfoView = badConnectionInfoView;
         this.localizationConstant = localizationConstant;
 
-        promptToLoginView.setDelegate(new PromptToLoginView.ActionDelegate() {
-            @Override
-            public void onLogin() {
-                String separator = Window.Location.getQueryString().contains("?") ? "&" : "?";
-                Window.Location.replace(Window.Location.getPath() + Window.Location.getQueryString() + separator + "login");
-            }
+        badConnectionInfoView.setDelegate(new BadConnectionNotifierView.ActionDelegate() {
 
             @Override
-            public void onCreateAccount() {
-                Window.Location.replace("/site/create-account");
+            public void onOkClicked() {
+                badConnectionInfoView.close();
             }
         });
     }
@@ -88,6 +83,6 @@ public class HostedEnvConnectionClosedInformer implements ConnectionClosedInform
      * Displays dialog using title and message.
      */
     private void showPromptToLogin(String title, String message) {
-        promptToLoginView.showDialog(title, message);
+        badConnectionInfoView.showDialog(title, message);
     }
 }

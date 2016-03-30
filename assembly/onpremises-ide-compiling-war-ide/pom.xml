@@ -20,7 +20,7 @@
     <parent>
         <artifactId>onpremises-ide-parent</artifactId>
         <groupId>com.codenvy.onpremises</groupId>
-        <version>4.0.0-RC14-SNAPSHOT</version>
+        <version>4.1.0-RC1-SNAPSHOT</version>
     </parent>
     <artifactId>onpremises-ide-compiling-war-ide</artifactId>
     <packaging>war</packaging>
@@ -94,10 +94,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-client-gwt-analytics</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-client-gwt-auth</artifactId>
         </dependency>
         <dependency>
@@ -127,10 +123,6 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-client-gwt-user</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-client-gwt-vfs</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
@@ -354,7 +346,7 @@
                                 <echo append="false" file="${project.build.directory}/classes/org/eclipse/che/ide/ext/help/client/BuildInfo.properties">
                                     revision = ${revision}
                                     buildTime = ${timestamp}
-                                    version = ${codenvy.onpremises.version}
+                                    version = ${project.version}
                                 </echo>
                                 <?SORTPOM RESUME?>
                             </tasks>

@@ -329,15 +329,6 @@ public class WorkspaceDaoImplTest {
                 assertEquals(project.getAttributes().get(attrName), attrValue, "Attribute values");
             }
 
-            final List<Document> modulesList = (List<Document>)projDoc.get("modules");
-            assertEquals(modulesList.size(), project.getModules().size());
-            for (Document module : modulesList) {
-                final String moduleName = module.getString("name");
-                assertEquals(moduleName, project.getModules().get(0).getName(), "Module name");
-                final List<Document> submodules = (List<Document>)module.get("modules");
-                assertEquals(submodules.size(), project.getModules().get(0).getModules().size(), "Modules size");
-            }
-
             if (project.getSource() != null) {
                 final Document source = (Document)projDoc.get("source");
 
@@ -517,23 +508,6 @@ public class WorkspaceDaoImplTest {
         sourceParameters.put("source-parameter-1", "value1");
         sourceParameters.put("source-parameter-2", "value2");
         project1.setSource(new SourceStorageImpl("sources-type", "sources-location", sourceParameters));
-
-        final ProjectConfigImpl innerModule = new ProjectConfigImpl();
-        innerModule.setName("module");
-        innerModule.setPath("/module");
-        innerModule.setType("sometype");
-        innerModule.setDescription("description");
-        innerModule.setMixins(singletonList("git"));
-
-        final ProjectConfigImpl topModule = new ProjectConfigImpl();
-        topModule.setName("module2");
-        topModule.setPath("/module2");
-        topModule.setType("sometype2");
-        topModule.setDescription("description2");
-        topModule.setMixins(singletonList("git"));
-        topModule.setModules(singletonList(innerModule));
-
-        project1.setModules(singletonList(topModule));
 
         final List<ProjectConfigImpl> projects = singletonList(project1);
 

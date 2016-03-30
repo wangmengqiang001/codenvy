@@ -14,6 +14,8 @@
  */
 package com.codenvy.ide.hosted.client.inject;
 
+import com.codenvy.ide.hosted.client.notifier.BadConnectionNotifierView;
+import com.codenvy.ide.hosted.client.notifier.BadConnectionNotifierViewImpl;
 import com.codenvy.ide.hosted.client.informers.HostedEnvConnectionClosedInformer;
 import com.codenvy.ide.hosted.client.login.PromptToLoginView;
 import com.codenvy.ide.hosted.client.login.PromptToLoginViewImpl;
@@ -34,5 +36,6 @@ public class HostedEnvironmentGinModule extends AbstractGinModule {
         bind(ProductInfoDataProvider.class).to(CodenvyProductInfoDataProvider.class).in(Singleton.class);
         bind(ConnectionClosedInformer.class).to(HostedEnvConnectionClosedInformer.class).in(javax.inject.Singleton.class);
         bind(PromptToLoginView.class).to(PromptToLoginViewImpl.class);
+        bind(BadConnectionNotifierView.class).to(BadConnectionNotifierViewImpl.class);
     }
 }

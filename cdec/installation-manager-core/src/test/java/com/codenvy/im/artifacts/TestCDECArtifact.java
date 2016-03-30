@@ -682,9 +682,23 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(3).toString(), "{'command'='sudo sed -i 's/certname = old/certname = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
         assertEquals(commands.get(4).toString(), "{'command'='sudo sed -i 's/server = old/server = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
         assertEquals(commands.get(5).toString(), "{'command'='sudo grep \"dns_alt_names = .*,new.*\" /etc/puppet/puppet.conf; if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,new/' /etc/puppet/puppet.conf; fi', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(6).toString(), "{'command'='sudo systemctl restart puppetmaster', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(7).toString(), "{'command'='sudo systemctl restart puppet', 'agent'='LocalAgent'}");
-
+        assertEquals(commands.get(6).toString(), "{'command'='sudo systemctl restart puppet', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(7).toString(), "{'command'='while true; do\n"
+                                                 + "  local COUNTER=0\n"
+                                                 + "  sudo puppet cert list --all | grep '\"new\"' &>/dev/null\n"
+                                                 + "  hasCertificate=$?\n"
+                                                 + "  if [[ $hasCertificate == 0 ]]; then\n"
+                                                 + "     sudo systemctl restart puppetmaster\n"
+                                                 + "     break\n"
+                                                 + "  fi\n"
+                                                 + "  sleep 10\n"
+                                                 + "  let COUNTER=COUNTER+1\n"
+                                                 + "  if [[ $COUNTER -eq 30 ]]; then\n"
+                                                 + "     echo 'Puppet agent error' >&2\n"
+                                                 + "     exit 1\n"
+                                                 + "  fi\n"
+                                                 + "done\n"
+                                                 + "', 'agent'='LocalAgent'}");
 
         MacroCommand updateCodenvyConfigCommand = (MacroCommand) testHelper.getUpdateConfigCommand(testConfig, properties);
         commands = updateCodenvyConfigCommand.getCommands();
@@ -747,9 +761,23 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(5).toString(), "{'command'='sudo sed -i 's/certname = old/certname = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
         assertEquals(commands.get(6).toString(), "{'command'='sudo sed -i 's/server = old/server = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
         assertEquals(commands.get(7).toString(), "{'command'='sudo grep \"dns_alt_names = .*,new.*\" /etc/puppet/puppet.conf; if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,new/' /etc/puppet/puppet.conf; fi', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(8).toString(), "{'command'='sudo systemctl restart puppetmaster', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(9).toString(), "{'command'='sudo systemctl restart puppet', 'agent'='LocalAgent'}");
-
+        assertEquals(commands.get(8).toString(), "{'command'='sudo systemctl restart puppet', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(9).toString(), "{'command'='while true; do\n"
+                                                 + "  local COUNTER=0\n"
+                                                 + "  sudo puppet cert list --all | grep '\"new\"' &>/dev/null\n"
+                                                 + "  hasCertificate=$?\n"
+                                                 + "  if [[ $hasCertificate == 0 ]]; then\n"
+                                                 + "     sudo systemctl restart puppetmaster\n"
+                                                 + "     break\n"
+                                                 + "  fi\n"
+                                                 + "  sleep 10\n"
+                                                 + "  let COUNTER=COUNTER+1\n"
+                                                 + "  if [[ $COUNTER -eq 30 ]]; then\n"
+                                                 + "     echo 'Puppet agent error' >&2\n"
+                                                 + "     exit 1\n"
+                                                 + "  fi\n"
+                                                 + "done\n"
+                                                 + "', 'agent'='LocalAgent'}");
 
         MacroCommand updateCodenvyConfigCommand = (MacroCommand) testHelper.getUpdateConfigCommand(testConfig, properties);
         commands = updateCodenvyConfigCommand.getCommands();

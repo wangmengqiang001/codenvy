@@ -17,7 +17,7 @@ package com.codenvy.plugin.webhooks.vsts.shared;
 import org.eclipse.che.dto.shared.DTO;
 
 @DTO
-public interface Links {
+public interface PullRequestUpdatedResourceLinks {
     /**
      * Get self link.
      *
@@ -27,7 +27,7 @@ public interface Links {
 
     void setSelf(final Link self);
 
-    Links withSelf(final Link self);
+    PullRequestUpdatedResourceLinks withSelf(final Link self);
 
     /**
      * Get workItemUpdates link.
@@ -38,7 +38,7 @@ public interface Links {
 
     void setWorkItemUpdates(final Link workItemUpdates);
 
-    Links withWorkItemUpdates(final Link workItemUpdates);
+    PullRequestUpdatedResourceLinks withWorkItemUpdates(final Link workItemUpdates);
 
     /**
      * Get workItemRevisions link.
@@ -49,7 +49,7 @@ public interface Links {
 
     void setWorkItemRevisions(final Link workItemRevisions);
 
-    Links withWorkItemRevisions(final Link workItemRevisions);
+    PullRequestUpdatedResourceLinks withWorkItemRevisions(final Link workItemRevisions);
 
     /**
      * Get workItemHistory link.
@@ -60,7 +60,7 @@ public interface Links {
 
     void setWorkItemHistory(final Link workItemHistory);
 
-    Links withWorkItemHistory(final Link workItemHistory);
+    PullRequestUpdatedResourceLinks withWorkItemHistory(final Link workItemHistory);
 
     /**
      * Get html link.
@@ -71,7 +71,7 @@ public interface Links {
 
     void setHtml(final Link html);
 
-    Links withHtml(final Link html);
+    PullRequestUpdatedResourceLinks withHtml(final Link html);
 
     /**
      * Get workItemType link.
@@ -82,7 +82,7 @@ public interface Links {
 
     void setWorkItemType(final Link workItemType);
 
-    Links withWorkItemType(final Link workItemType);
+    PullRequestUpdatedResourceLinks withWorkItemType(final Link workItemType);
 
     /**
      * Get fields link.
@@ -93,5 +93,5 @@ public interface Links {
 
     void setFields(final Link fields);
 
-    Links withFields(final Link fields);
+    PullRequestUpdatedResourceLinks withFields(final Link fields);
 }

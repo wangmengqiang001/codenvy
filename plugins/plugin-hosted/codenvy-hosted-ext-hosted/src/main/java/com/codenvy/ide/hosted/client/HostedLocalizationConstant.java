@@ -57,6 +57,9 @@ public interface HostedLocalizationConstant extends Messages {
     @Key("login.button")
     String loginButtonTitle();
 
+    @Key("ok.button")
+    String okButtonTitle();
+
     @Key("create.account.button")
     String createAccountButtonTitle();
 

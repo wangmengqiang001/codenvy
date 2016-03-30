@@ -14,15 +14,15 @@
  */
 package com.codenvy.ide.factory.client.json;
 
-import org.eclipse.che.api.analytics.client.logger.AnalyticsEventLogger;
+import com.codenvy.ide.factory.client.FactoryLocalizationConstant;
+import com.codenvy.ide.factory.client.FactoryResources;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.eclipse.che.api.workspace.gwt.client.WorkspaceServiceClient;
 import org.eclipse.che.ide.api.action.Action;
 import org.eclipse.che.ide.api.action.ActionEvent;
-import com.codenvy.ide.factory.client.FactoryLocalizationConstant;
-import com.codenvy.ide.factory.client.FactoryResources;
 import org.eclipse.che.ide.rest.DtoUnmarshallerFactory;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 /**
  * @author Sergii Leschenko
@@ -31,14 +31,12 @@ import com.google.inject.Singleton;
 public class ImportFromConfigAction extends Action {
 
     private final ImportFromConfigPresenter presenter;
-    private final AnalyticsEventLogger      eventLogger;
 
     @Inject
     public ImportFromConfigAction(final ImportFromConfigPresenter presenter,
                                   FactoryLocalizationConstant locale,
                                   WorkspaceServiceClient workspaceServiceClient,
                                   DtoUnmarshallerFactory dtoUnmarshallerFactory,
-                                  AnalyticsEventLogger eventLogger,
                                   FactoryResources resources) {
         super(locale.importFromConfigurationName(), locale.importFromConfigurationDescription(), null, resources.importConfig());
         this.presenter = presenter;
@@ -56,14 +54,11 @@ public class ImportFromConfigAction extends Action {
 //                getTemplatePresentation().setEnabled(false);
 //            }
 //        });
-
-        this.eventLogger = eventLogger;
     }
 
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(ActionEvent e) {
-        eventLogger.log(this);
         presenter.showDialog();
     }
 

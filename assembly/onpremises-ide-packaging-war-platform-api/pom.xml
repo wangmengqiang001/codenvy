@@ -21,7 +21,7 @@
     <parent>
         <artifactId>onpremises-ide-parent</artifactId>
         <groupId>com.codenvy.onpremises</groupId>
-        <version>4.0.0-RC14-SNAPSHOT</version>
+        <version>4.1.0-RC1-SNAPSHOT</version>
     </parent>
     <artifactId>onpremises-ide-packaging-war-platform-api</artifactId>
     <packaging>war</packaging>
@@ -34,10 +34,6 @@
         <dependency>
             <groupId>com.codahale.metrics</groupId>
             <artifactId>metrics-servlets</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.factory</groupId>
-            <artifactId>codenvy-factory-storage-mongo</artifactId>
         </dependency>
         <dependency>
             <groupId>com.codenvy.hosted-infrastructure</groupId>
@@ -165,10 +161,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-api-analytics</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-auth</artifactId>
         </dependency>
         <dependency>
@@ -197,10 +189,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-api-vfs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-workspace</artifactId>
         </dependency>
         <dependency>
@@ -218,10 +206,6 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-commons-schedule</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-vfs-impl</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.lib</groupId>

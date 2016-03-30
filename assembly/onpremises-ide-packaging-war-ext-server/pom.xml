@@ -20,7 +20,7 @@
     <parent>
         <artifactId>onpremises-ide-parent</artifactId>
         <groupId>com.codenvy.onpremises</groupId>
-        <version>4.0.0-RC14-SNAPSHOT</version>
+        <version>4.1.0-RC1-SNAPSHOT</version>
     </parent>
     <artifactId>onpremises-ide-packaging-war-ext-server</artifactId>
     <packaging>war</packaging>
@@ -96,19 +96,11 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-api-vfs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-commons-inject</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-git-impl-native</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.che.core</groupId>
-            <artifactId>che-core-vfs-impl</artifactId>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.lib</groupId>
@@ -195,8 +187,7 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <configuration>
                     <packagingExcludes>WEB-INF/lib/*gwt*.jar,
-                        WEB-INF/lib/gin-*.jar,
-                        WEB-INF/lib/che-core-api-analytics-*.jar</packagingExcludes>
+                        WEB-INF/lib/gin-*.jar</packagingExcludes>
                 </configuration>
             </plugin>
         </plugins>

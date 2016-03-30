@@ -273,6 +273,8 @@ if [ ${MULTI_SERVER} == true ]; then
   checkThatTomcatStartsWithoutErrors "api"
   checkThatTomcatStartsWithoutErrors "site"
   checkThatTomcatStartsWithoutErrors "analytics"
+elif [ ${SCALABLE_AIO} == true ]; then
+  checkThatTomcatStartsWithoutErrors "devbox"
 else
   checkThatTomcatStartsWithoutErrors ""
 fi

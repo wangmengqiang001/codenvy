@@ -20,13 +20,14 @@ import org.eclipse.che.api.core.util.ListLineConsumer;
 import org.eclipse.che.api.core.util.ProcessUtil;
 import org.eclipse.che.api.core.util.ValueHolder;
 import org.eclipse.che.api.core.util.Watchdog;
-import org.eclipse.che.commons.lang.WorkspaceIdHashLocationFinder;
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -130,16 +131,18 @@ public class MachineBackupManager {
                                        final String userId,
                                        final String groupId,
                                        final String destAddress) throws ServerException {
-        final String srcPath = WorkspaceIdHashLocationFinder.calculateDirPath(backupsRootDir, workspaceId).toString();
-
-        CommandLine commandLine = new CommandLine(restoreScript,
-                                                  srcPath,
-                                                  destPath,
-                                                  destAddress,
-                                                  userId,
-                                                  groupId);
-
         try {
+            final String srcPath = WorkspaceIdHashLocationFinder.calculateDirPath(backupsRootDir, workspaceId).toString();
+
+            Files.createDirectories(Paths.get(srcPath));
+
+            CommandLine commandLine = new CommandLine(restoreScript,
+                                                      srcPath,
+                                                      destPath,
+                                                      destAddress,
+                                                      userId,
+                                                      groupId);
+
             execute(commandLine.asArray(), restoreDuration);
         } catch (TimeoutException e) {
             throw new ServerException("Restoring of workspace " + workspaceId + " filesystem terminated due to timeout.");
