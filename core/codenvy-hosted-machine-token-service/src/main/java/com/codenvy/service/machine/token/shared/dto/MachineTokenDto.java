@@ -32,6 +32,13 @@ public interface MachineTokenDto {
     MachineTokenDto withUserId(String userId);
 
 
+    String getWorkspaceId();
+
+    void setWorkspaceId(String workspaceId);
+
+    MachineTokenDto withWorkspaceId(String workspaceId);
+
+
     String getMachineToken();
 
     void setMachineToken(String machineToken);

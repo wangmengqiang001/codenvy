@@ -14,41 +14,61 @@
  */
 package com.codenvy.service.machine.token;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+
 import org.eclipse.che.api.core.NotFoundException;
 
 import javax.inject.Singleton;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.String.format;
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
 
 /**
  *
- * Map-based storage of machine security tokens.
+ * Table-based storage of machine security tokens.
+ * Table rows is workspace Id's, columns - user Id's.
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
 @Singleton
 public class MachineTokenRegistry {
 
-    private Map<String, String> tokens = new ConcurrentHashMap<>();
+    private Table<String, String, String> tokens = HashBasedTable.create();
 
-    public void generateToken(String userId) {
-        tokens.putIfAbsent(userId, generate("", 64));
+    /**
+     * Generates new token for user in workspace.
+     *
+     * @param userId
+     * @param workspaceId
+     */
+    public void generateToken(String userId, String workspaceId) {
+        tokens.put(workspaceId, userId, generate("", 64));
     }
 
-    public String getToken(String userId) throws NotFoundException {
-        final String token = tokens.get(userId);
+    /**
+     * Gets token for user and workspace.
+     *
+     * @param userId
+     * @param workspaceId
+     * @return
+     * @throws NotFoundException
+     *         when no token exists for given user or workspace
+     */
+    public String getToken(String userId, String workspaceId) throws NotFoundException {
+        final String token = tokens.get(workspaceId, userId);
         if (token == null) {
             throw new NotFoundException(format("Token not found for user %s", userId));
         }
         return token;
     }
 
-    public void removeToken(String userId) {
-        tokens.remove(userId);
+    /**
+     * Invalidates tokens for all users of given workspace.
+     * @param workspaceId
+     */
+    public void removeTokens(String workspaceId) {
+        tokens.row(workspaceId).clear();
     }
 
 
