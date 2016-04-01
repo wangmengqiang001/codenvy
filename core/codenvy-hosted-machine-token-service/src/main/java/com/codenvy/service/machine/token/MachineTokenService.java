@@ -56,6 +56,6 @@ public class MachineTokenService {
         final String userId = EnvironmentContext.getCurrent().getUser().getId();
         return newDto(MachineTokenDto.class).withUserId(userId)
                                             .withWorkspaceId(id)
-                                            .withMachineToken(registry.getToken(id, userId));
+                                            .withMachineToken(registry.getToken(userId, id));
     }
 }

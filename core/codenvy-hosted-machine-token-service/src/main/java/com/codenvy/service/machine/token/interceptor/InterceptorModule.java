@@ -1,3 +1,17 @@
+/*
+ *  [2012] - [2016] Codenvy, S.A.
+ *  All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Codenvy S.A. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Codenvy S.A.
+ * and its suppliers and may be covered by U.S. and Foreign Patents,
+ * patents in process, and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Codenvy S.A..
+ */
 package com.codenvy.service.machine.token.interceptor;
 
 import com.google.inject.AbstractModule;
@@ -9,8 +23,9 @@ import static org.eclipse.che.inject.Matchers.names;
 
 
 /**
- * @author Max Shaposhnik (mshaposhnik@codenvy.com)
+ * Guice interceptor bindings.
  *
+ * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
 public class InterceptorModule extends AbstractModule {
 
@@ -18,8 +33,8 @@ public class InterceptorModule extends AbstractModule {
     protected void configure() {
         final MachineTokenInterceptor tokenInterceptor = new MachineTokenInterceptor();
         requestInjection(tokenInterceptor);
-        bindInterceptor(subclassesOf(WorkspaceManager.class), names("startById"), tokenInterceptor);
-        bindInterceptor(subclassesOf(WorkspaceManager.class), names("startByName"), tokenInterceptor);
+        bindInterceptor(subclassesOf(WorkspaceManager.class), names("startWorkspaceById"), tokenInterceptor);
+        bindInterceptor(subclassesOf(WorkspaceManager.class), names("startWorkspaceByName"), tokenInterceptor);
         bindInterceptor(subclassesOf(WorkspaceManager.class), names("recoverWorkspace"), tokenInterceptor);
 
         bindInterceptor(subclassesOf(WorkspaceManager.class), names("stopWorkspace"), tokenInterceptor);
