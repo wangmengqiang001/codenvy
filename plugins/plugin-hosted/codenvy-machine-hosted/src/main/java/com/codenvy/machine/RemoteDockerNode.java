@@ -16,7 +16,6 @@ package com.codenvy.machine;
 
 import com.codenvy.machine.backup.MachineBackupManager;
 import com.codenvy.swarm.client.SwarmDockerConnector;
-import com.codenvy.swarm.client.json.SwarmContainerInfo;
 import com.google.inject.assistedinject.Assisted;
 
 import org.eclipse.che.api.core.ServerException;
@@ -25,6 +24,7 @@ import org.eclipse.che.api.machine.server.exception.MachineException;
 import org.eclipse.che.plugin.docker.client.DockerConnector;
 import org.eclipse.che.plugin.docker.client.Exec;
 import org.eclipse.che.plugin.docker.client.LogMessage;
+import org.eclipse.che.plugin.docker.client.json.ContainerInfo;
 import org.eclipse.che.plugin.docker.machine.node.DockerNode;
 import org.eclipse.che.plugin.docker.machine.node.WorkspaceFolderPathProvider;
 import org.slf4j.Logger;
@@ -75,7 +75,7 @@ public class RemoteDockerNode implements DockerNode {
             this.hostProjectsFolder = workspaceFolderPathProvider.getPath(workspaceId);
             if (dockerConnector instanceof SwarmDockerConnector) {
 
-                final SwarmContainerInfo info = (SwarmContainerInfo)dockerConnector.inspectContainer(containerId);
+                final ContainerInfo info = dockerConnector.inspectContainer(containerId);
                 if (info != null) {
                     final Matcher matcher = NODE_ADDRESS.matcher(info.getNode().getAddr());
                     if (matcher.matches()) {

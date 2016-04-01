@@ -14,7 +14,6 @@
  */
 package com.codenvy.swarm.machine;
 
-import com.codenvy.swarm.client.json.SwarmContainerInfo;
 import com.google.inject.assistedinject.Assisted;
 
 import org.eclipse.che.api.core.model.machine.MachineConfig;
@@ -34,7 +33,7 @@ import java.util.Set;
  */
 public class SwarmInstanceRuntimeInfo extends DockerInstanceRuntimeInfo {
 
-    private final SwarmContainerInfo info;
+    private final ContainerInfo info;
 
     @Inject
     public SwarmInstanceRuntimeInfo(@Assisted ContainerInfo containerInfo,
@@ -43,7 +42,7 @@ public class SwarmInstanceRuntimeInfo extends DockerInstanceRuntimeInfo {
                                     @Named("machine.docker.dev_machine.machine_servers") Set<ServerConf> devMachineServers,
                                     @Named("machine.docker.machine_servers") Set<ServerConf> allMachinesServers) {
         super(containerInfo, dockerNodeHost, machineConfig, devMachineServers, allMachinesServers);
-        info = (SwarmContainerInfo)containerInfo;
+        info = containerInfo;
     }
 
     @Override
