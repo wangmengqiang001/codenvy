@@ -37,7 +37,7 @@ public class MachineTokenRegistry {
     private Table<String, String, String> tokens = HashBasedTable.create();
 
     /**
-     * Generates new machine security token for user in workspace.
+     * Generates new machine security token for given user and workspace.
      *
      * @param userId
      * @param workspaceId
@@ -66,10 +66,9 @@ public class MachineTokenRegistry {
     /**
      * Invalidates machine security tokens for all users of given workspace.
      * @param workspaceId
+     *        workspace to invalidate tokens
      */
     public void removeTokens(String workspaceId) {
         tokens.row(workspaceId).clear();
     }
-
-
 }
