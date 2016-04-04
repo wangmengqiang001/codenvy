@@ -33,8 +33,7 @@ public class InterceptorModule extends AbstractModule {
     protected void configure() {
         final MachineTokenInterceptor tokenInterceptor = new MachineTokenInterceptor();
         requestInjection(tokenInterceptor);
-        bindInterceptor(subclassesOf(WorkspaceManager.class), names("startWorkspaceById"), tokenInterceptor);
-        bindInterceptor(subclassesOf(WorkspaceManager.class), names("startWorkspaceByName"), tokenInterceptor);
+        bindInterceptor(subclassesOf(WorkspaceManager.class), names("startWorkspace"), tokenInterceptor);
         bindInterceptor(subclassesOf(WorkspaceManager.class), names("recoverWorkspace"), tokenInterceptor);
 
         bindInterceptor(subclassesOf(WorkspaceManager.class), names("stopWorkspace"), tokenInterceptor);

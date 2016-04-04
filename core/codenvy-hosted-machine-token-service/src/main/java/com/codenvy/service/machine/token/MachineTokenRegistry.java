@@ -37,7 +37,7 @@ public class MachineTokenRegistry {
     private Table<String, String, String> tokens = HashBasedTable.create();
 
     /**
-     * Generates new token for user in workspace.
+     * Generates new machine security token for user in workspace.
      *
      * @param userId
      * @param workspaceId
@@ -47,24 +47,24 @@ public class MachineTokenRegistry {
     }
 
     /**
-     * Gets token for user and workspace.
+     * Gets machine security token for user and workspace.
      *
      * @param userId
      * @param workspaceId
-     * @return
+     * @return machine security token
      * @throws NotFoundException
      *         when no token exists for given user or workspace
      */
     public String getToken(String userId, String workspaceId) throws NotFoundException {
         final String token = tokens.get(workspaceId, userId);
         if (token == null) {
-            throw new NotFoundException(format("Token not found for user %s", userId));
+            throw new NotFoundException(format("Token not found for user %s and/or workspace %s", userId, workspaceId));
         }
         return token;
     }
 
     /**
-     * Invalidates tokens for all users of given workspace.
+     * Invalidates machine security tokens for all users of given workspace.
      * @param workspaceId
      */
     public void removeTokens(String workspaceId) {

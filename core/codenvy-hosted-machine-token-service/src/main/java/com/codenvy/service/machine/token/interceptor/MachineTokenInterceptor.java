@@ -18,14 +18,14 @@ import com.codenvy.service.machine.token.MachineTokenRegistry;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- * Intercepts call to workspace start/stop methods
- *
+ * Intercepts calls to workspace start/stop methods and
+ * creates machine authorization token in the registry.
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
@@ -45,9 +45,9 @@ public class MachineTokenInterceptor implements MethodInterceptor {
             return  result;
         }
 
-        if (result instanceof UsersWorkspace) {
-            UsersWorkspace workspace = ((UsersWorkspace)result);
-            tokenRegistry.generateToken(workspace.getOwner(), workspace.getId());
+        if (result instanceof Workspace) {
+            Workspace workspace = ((Workspace)result);
+            tokenRegistry.generateToken(workspace.getNamespace(), workspace.getId());
         }
         return result;
     }

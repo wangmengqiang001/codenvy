@@ -23,6 +23,7 @@
         <version>4.1.0-RC1-SNAPSHOT</version>
     </parent>
     <artifactId>codenvy-hosted-machine-token-service</artifactId>
+    <name>Codenvy :: Hosted :: Machine Token Service</name>
     <properties>
         <dto-generator-out-directory>${project.build.directory}/generated-sources/dto/</dto-generator-out-directory>
     </properties>

@@ -31,7 +31,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 /**
- * Machine token service.
+ * Machine security token service.
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
