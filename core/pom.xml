@@ -48,5 +48,8 @@
         <module>codenvy-hosted-authorization</module>
         <module>codenvy-hosted-workspace-activity</module>
         <module>codenvy-hosted-workspace-activity-agent</module>
+        <module>codenvy-hosted-api-permission</module>
+        <module>codenvy-hosted-api-workspace</module>
+        <module>codenvy-hosted-authorization</module>
     </modules>
 </project>

@@ -22,8 +22,7 @@ import org.eclipse.che.api.account.server.dao.AccountDao;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.UnauthorizedException;
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.user.User;
@@ -72,7 +71,7 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
             case "startByName": {
                 String workspaceName = ((String)arguments[0]);
                 try {
-                    UsersWorkspace workspace = workspaceDao.get(workspaceName, currentUser.getId());
+                    Workspace workspace = workspaceDao.get(workspaceName, currentUser.getId());
                     workspaceId = workspace.getId();
                 } catch (NotFoundException | ServerException e) {
                     //Can't authorize operation
@@ -89,7 +88,7 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
             case "getByName": {
                 String workspaceName = ((String)arguments[0]);
                 try {
-                    UsersWorkspace workspace = workspaceDao.get(currentUser.getId(), workspaceName);
+                    Workspace workspace = workspaceDao.get(currentUser.getId(), workspaceName);
                     workspaceId = workspace.getId();
                 } catch (NotFoundException e) {
                     throw new ServerException(e);

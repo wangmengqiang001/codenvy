@@ -19,13 +19,11 @@ import com.codenvy.api.permission.server.dao.PermissionsStorage;
 import com.google.common.collect.ImmutableSet;
 import com.mongodb.client.MongoDatabase;
 
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
-import org.eclipse.che.api.workspace.server.model.impl.UsersWorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -59,14 +57,12 @@ public class WorkspacePermissionStorage extends CommonPermissionStorage {
         }
 
         try {
-            final UsersWorkspaceImpl workspace = workspaceManager.getWorkspace(instance);
-            if (workspace.getOwner().equals(user)) {
+            final WorkspaceImpl workspace = workspaceManager.getWorkspace(instance);
+            if (workspace.getNamespace().equals(user)) {
                 throw new ConflictException("Permissions for creator can't be removed");
             }
         } catch (NotFoundException e) {
             //allow to remove permissions of owner to non existent workspace
-        } catch (BadRequestException e) {
-            throw new ServerException(e);
         }
 
         super.remove(user, domain, instance);

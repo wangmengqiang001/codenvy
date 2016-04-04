@@ -16,6 +16,7 @@ package com.codenvy.api.permission.server.dao;
 
 import com.codenvy.api.permission.server.Permissions;
 import com.codenvy.api.permission.server.PermissionsDomain;
+import com.google.common.base.Preconditions;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 

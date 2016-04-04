@@ -23,16 +23,17 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.Environment;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
-import org.eclipse.che.api.workspace.server.RuntimeWorkspaceRegistry;
+import org.eclipse.che.api.workspace.server.WorkspaceManager;
+import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.eclipse.che.api.workspace.shared.dto.WorkspaceConfigDto;
 import org.eclipse.che.commons.env.EnvironmentContext;
-import org.everrest.core.Filter;
 
 import javax.inject.Inject;
-import javax.ws.rs.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * Restricts number of used RAM per user
@@ -45,17 +46,9 @@ public class RamLimitInterceptor implements MethodInterceptor {
     private static final Striped<Lock> START_LOCKS = Striped.lazyWeakLock(100);
 
     @Inject
-    private WorkspaceDao             workspaceDao;
+    private WorkspaceDao     workspaceDao;
     @Inject
-    private RuntimeWorkspaceRegistry runtimeWorkspaceRegistry;
-
-    private int getUsedRam(Environment environment) {
-        return environment.getMachineConfigs()
-                          .stream()
-                          .filter(machineCfg -> machineCfg.getLimits() != null)
-                          .mapToInt(machineCfg -> machineCfg.getLimits().getRam())
-                          .sum();
-    }
+    private WorkspaceManager workspaceManager;
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
@@ -114,17 +107,18 @@ public class RamLimitInterceptor implements MethodInterceptor {
                                                                                        .stream()
                                                                                        .filter(env -> env.getName().equals(finalEnvName))
                                                                                        .findFirst();
+            final long requiredRam = getUsedRam(environmentOptional);
 
-            if (!environmentOptional.isPresent()) {
-                throw new ServerException("Can't find workspace's environment");
+            final List<Optional<EnvironmentImpl>> activeEnviroments =
+                    workspaceManager.getWorkspaces(EnvironmentContext.getCurrent().getUser().getId())
+                                    .stream()
+                                    .map(workspace -> workspace.getConfig().getEnvironment(
+                                            workspace.getRuntime().getActiveEnv()))
+                                    .collect(Collectors.toList());
+            int usedRam = 0;
+            for (Optional<EnvironmentImpl> activeEnviroment : activeEnviroments) {
+                usedRam += getUsedRam(activeEnviroment);
             }
-
-            final long requiredRam = getUsedRam(environmentOptional.get());
-
-            final int usedRam = runtimeWorkspaceRegistry.getByOwner(EnvironmentContext.getCurrent().getUser().getId())
-                                                        .stream()
-                                                        .mapToInt(runtime -> getUsedRam(runtime.getActiveEnvironment()))
-                                                        .sum();
 
             if (requiredRam + usedRam > RAM_LIMIT) {
                 throw new ForbiddenException("Current user can't use more than " + RAM_LIMIT + " mb");
@@ -134,5 +128,17 @@ public class RamLimitInterceptor implements MethodInterceptor {
         } finally {
             lock.unlock();
         }
+    }
+
+    private int getUsedRam(Optional<? extends Environment> environment) throws ServerException {
+        if (!environment.isPresent()) {
+            throw new ServerException("Can't find workspace's environment");
+        }
+        return environment.get()
+                          .getMachineConfigs()
+                          .stream()
+                          .filter(machineCfg -> machineCfg.getLimits() != null)
+                          .mapToInt(machineCfg -> machineCfg.getLimits().getRam())
+                          .sum();
     }
 }
