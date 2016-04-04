@@ -40,7 +40,9 @@ public class MachineTokenRegistry {
      * Generates new machine security token for given user and workspace.
      *
      * @param userId
+     *        id of user to generate token for
      * @param workspaceId
+     *        id of workspace to generate token for
      */
     public void generateToken(String userId, String workspaceId) {
         tokens.put(workspaceId, userId, generate("", 64));
@@ -50,10 +52,12 @@ public class MachineTokenRegistry {
      * Gets machine security token for user and workspace.
      *
      * @param userId
+     *        id of user to get token
      * @param workspaceId
+     *        id of workspace to get token
      * @return machine security token
      * @throws NotFoundException
-     *         when no token exists for given user or workspace
+     *         when no token exists for given user and/or workspace
      */
     public String getToken(String userId, String workspaceId) throws NotFoundException {
         final String token = tokens.get(workspaceId, userId);
