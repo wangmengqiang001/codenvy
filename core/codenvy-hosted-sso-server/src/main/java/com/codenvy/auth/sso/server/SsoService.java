@@ -20,7 +20,7 @@ import com.codenvy.api.dao.authentication.CookieBuilder;
 import com.codenvy.api.dao.authentication.TicketManager;
 import com.codenvy.api.dao.authentication.TokenGenerator;
 import com.codenvy.auth.sso.server.organization.UserCreator;
-import com.codenvy.auth.sso.shared.dto.UserDTO;
+import com.codenvy.auth.sso.shared.dto.UserDto;
 
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.commons.user.User;
@@ -95,7 +95,7 @@ public class SsoService {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{token}")
     @GET
-    public UserDTO getCurrentPrincipal(@PathParam("token") String token,
+    public UserDto getCurrentPrincipal(@PathParam("token") String token,
                                        @QueryParam("clienturl") String clientUrl,
                                        @QueryParam("workspaceid") String workspaceId,
                                        @QueryParam("accountid") String accountId) throws AuthenticationException {
@@ -114,7 +114,7 @@ public class SsoService {
 
 
             Set<String> roles = rolesExtractorRegistry.getRoles(accessTicket, workspaceId, accountId);
-            return DtoFactory.newDto(UserDTO.class)
+            return DtoFactory.newDto(UserDto.class)
                              .withName(accessTicket.getPrincipal().getName())
                              .withId(accessTicket.getPrincipal().getId())
                              .withRoles(new ArrayList<>(roles))

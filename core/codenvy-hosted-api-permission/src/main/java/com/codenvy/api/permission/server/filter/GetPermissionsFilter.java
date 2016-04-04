@@ -31,7 +31,7 @@ import javax.ws.rs.PathParam;
  * @author Sergii Leschenko
  */
 @Filter
-@Path("/permissions/{domain}/{instance}")
+@Path("/permissions/{domain}/{instance}/list")
 public class GetPermissionsFilter extends CheMethodInvokerFilter {
     @PathParam("domain")
     private String domain;

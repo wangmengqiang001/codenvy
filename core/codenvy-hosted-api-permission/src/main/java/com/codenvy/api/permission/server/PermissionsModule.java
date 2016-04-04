@@ -18,6 +18,9 @@ import com.codenvy.api.permission.server.dao.CommonDomain;
 import com.codenvy.api.permission.server.dao.CommonPermissionStorage;
 import com.codenvy.api.permission.server.dao.PermissionsCodec;
 import com.codenvy.api.permission.server.dao.PermissionsStorage;
+import com.codenvy.api.permission.server.filter.GetPermissionsFilter;
+import com.codenvy.api.permission.server.filter.RemovePermissionsFilter;
+import com.codenvy.api.permission.server.filter.SetPermissionsFilter;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
@@ -32,10 +35,12 @@ public class PermissionsModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(PermissionsService.class);
+        bind(SetPermissionsFilter.class);
+        bind(RemovePermissionsFilter.class);
+        bind(GetPermissionsFilter.class);
 
         //Creates empty multibinder to avoid error during container starting
         Multibinder.newSetBinder(binder(), PermissionsDomain.class, CommonDomain.class);
-
 
         Multibinder<PermissionsStorage> storages = Multibinder.newSetBinder(binder(),
                                                                             PermissionsStorage.class);

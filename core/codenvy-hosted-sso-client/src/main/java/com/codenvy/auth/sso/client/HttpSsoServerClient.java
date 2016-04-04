@@ -15,7 +15,7 @@
 package com.codenvy.auth.sso.client;
 
 import com.codenvy.auth.sso.server.SsoService;
-import com.codenvy.auth.sso.shared.dto.UserDTO;
+import com.codenvy.auth.sso.shared.dto.UserDto;
 import com.google.inject.name.Named;
 
 import org.eclipse.che.api.core.ApiException;
@@ -30,7 +30,6 @@ import javax.inject.Inject;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.HashSet;
 
 /**
  * Communicates with sso server by http calls.
@@ -69,9 +68,9 @@ public class HttpSsoServerClient implements ServerClient {
                 currentPrincipalRequest.addQueryParam("accountid", accountId);
             }
 
-            final UserDTO userDTO = currentPrincipalRequest.request()
-                                                           .asDto(UserDTO.class);
-            return new UserImpl(userDTO.getName(), userDTO.getId(), userDTO.getToken(), userDTO.getRoles(), userDTO.isTemporary());
+            final UserDto userDto = currentPrincipalRequest.request()
+                                                           .asDto(UserDto.class);
+            return new UserImpl(userDto.getName(), userDto.getId(), userDto.getToken(), userDto.getRoles(), userDto.isTemporary());
         } catch (ApiException | IOException e) {
             LOG.warn(e.getLocalizedMessage());
         }

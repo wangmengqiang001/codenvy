@@ -14,7 +14,7 @@
  */
 package com.codenvy.api.permission.server.filter;
 
-import com.codenvy.api.permission.shared.dto.PermissionsDTO;
+import com.codenvy.api.permission.shared.dto.PermissionsDto;
 
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.ServerException;
@@ -39,7 +39,7 @@ public class SetPermissionsFilter extends CheMethodInvokerFilter {
             throws UnauthorizedException, ForbiddenException, ServerException {
         final String methodName = genericMethodResource.getMethod().getName();
         if (methodName.equals("storePermissions")) {
-            final PermissionsDTO permissions = (PermissionsDTO)arguments[0];
+            final PermissionsDto permissions = (PermissionsDto)arguments[0];
 
             if (!EnvironmentContext.getCurrent().getUser().hasPermission(permissions.getDomain(),
                                                                          permissions.getInstance(),

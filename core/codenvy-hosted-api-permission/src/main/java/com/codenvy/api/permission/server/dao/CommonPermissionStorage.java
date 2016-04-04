@@ -24,7 +24,6 @@ import com.mongodb.client.model.UpdateOptions;
 
 import org.bson.Document;
 import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.ServerException;
 
 import javax.inject.Inject;
@@ -49,7 +48,7 @@ import static java.util.function.Function.identity;
  *
  * <p>Stores permissions of domains that bound by {@link CommonDomain}
  *
- * <p>Example of binding domain
+ * <p>Example of domain binding
  * <pre>
  *     Multibinder<PermissionsDomain> multibinder = Multibinder.newSetBinder(binder(), PermissionsDomain.class, CommonDomain.class);
  *     multibinder.addBinding().toInstance(new PermissionsDomain("myDomain",

@@ -17,8 +17,6 @@ package com.codenvy.api.workspace.server.filters;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
 
 import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.everrest.CheMethodInvokerFilter;
 import org.everrest.core.Filter;

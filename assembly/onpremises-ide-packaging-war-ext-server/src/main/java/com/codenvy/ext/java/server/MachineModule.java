@@ -16,7 +16,7 @@ package com.codenvy.ext.java.server;
 
 import com.codenvy.api.permission.server.PermissionTokenHandler;
 import com.codenvy.api.permission.server.PermissionChecker;
-import com.codenvy.api.permission.server.RemotePermissionChecker;
+import com.codenvy.api.permission.server.HttpPermissionChecker;
 import com.codenvy.auth.sso.client.RecoverableTokenHandler;
 import com.codenvy.auth.sso.client.SSOContextResolver;
 import com.google.inject.AbstractModule;
@@ -95,9 +95,9 @@ public class MachineModule extends AbstractModule {
 
         bind(SSOContextResolver.class).to(com.codenvy.auth.sso.client.EnvironmentContextResolver.class);
 
-        bind(PermissionChecker.class).to(RemotePermissionChecker.class);
+        bind(PermissionChecker.class).to(HttpPermissionChecker.class);
         bind(com.codenvy.auth.sso.client.TokenHandler.class).to(PermissionTokenHandler.class);
-        bind(com.codenvy.auth.sso.client.TokenHandler.class).annotatedWith(Names.named("delegate.handler"))
+        bind(com.codenvy.auth.sso.client.TokenHandler.class).annotatedWith(Names.named("delegated.handler"))
                                                             .to(RecoverableTokenHandler.class);
 
         bindConstant().annotatedWith(Names.named("auth.sso.cookies_disabled_error_page_url"))

@@ -14,13 +14,10 @@
  */
 package com.codenvy.api.permission.server;
 
-import com.codenvy.api.permission.shared.dto.PermissionsDTO;
-import com.google.common.base.Strings;
+import com.codenvy.api.permission.shared.dto.PermissionsDto;
 
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -85,7 +82,7 @@ public class PermissionsService extends Service {
      */
     @POST
     @Consumes(APPLICATION_JSON)
-    public void storePermissions(PermissionsDTO permissionsDto) throws ServerException, BadRequestException {
+    public void storePermissions(PermissionsDto permissionsDto) throws ServerException, BadRequestException {
         checkArgument(permissionsDto != null, "Permissions descriptor required");
         checkArgument(!isNullOrEmpty(permissionsDto.getUser()), "User required");
         checkArgument(!isNullOrEmpty(permissionsDto.getDomain()), "Domain required");
@@ -127,11 +124,11 @@ public class PermissionsService extends Service {
      */
     @GET
     @Path("/{domain}/{instance}/list")
-    public List<PermissionsDTO> getUsersPermissionsByInstance(@PathParam("domain") String domain,
+    public List<PermissionsDto> getUsersPermissionsByInstance(@PathParam("domain") String domain,
                                                               @PathParam("instance") String instance) throws ServerException {
         return permissionManager.getByInstance(domain, instance)
                                 .stream()
-                                .map(permissions -> DtoFactory.newDto(PermissionsDTO.class)
+                                .map(permissions -> DtoFactory.newDto(PermissionsDto.class)
                                                               .withUser(permissions.getUser())
                                                               .withDomain(permissions.getDomain())
                                                               .withInstance(permissions.getInstance())
@@ -150,7 +147,6 @@ public class PermissionsService extends Service {
      *         instance id
      */
     @DELETE
-    //TODO Think about path
     @Path("/{domain}/{instance}/{user}")
     public void removePermissions(@PathParam("domain") String domain,
                                   @PathParam("instance") String instance,

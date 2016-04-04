@@ -49,8 +49,6 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 /**
- * TODO Add tests for all methods from CommonPermissionStorage
- *
  * Tests for {@link CommonPermissionStorage}
  *
  * @author Sergii Leschenko
@@ -63,7 +61,7 @@ public class CommonPermissionStorageTest {
 
     @BeforeMethod
     public void setUpDb() throws Exception {
-        final Fongo fongo = new Fongo("Workspace test server");
+        final Fongo fongo = new Fongo("Permissions test server");
         final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
         final MongoDatabase database = fongo.getDatabase("permissions")
                                             .withCodecRegistry(fromRegistries(defaultRegistry,
