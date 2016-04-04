@@ -21,7 +21,7 @@ import org.eclipse.che.api.account.server.dao.AccountDao;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.workspace.server.WorkspaceHooks;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.commons.annotation.Nullable;
@@ -73,7 +73,7 @@ public class AccountWorkspaceHooks implements WorkspaceHooks {
      * </pre>
      */
     @Override
-    public void beforeStart(@NotNull UsersWorkspace workspace,
+    public void beforeStart(@NotNull Workspace workspace,
                             @NotNull String envName,
                             @Nullable String accountId) throws NotFoundException, ForbiddenException, ServerException {
         requireNonNull(envName, "Expected non-null environment name");
@@ -89,7 +89,7 @@ public class AccountWorkspaceHooks implements WorkspaceHooks {
                     throw new ForbiddenException(format("Workspace start rejected. Impossible to determine account for workspace '%s', "
                                                         + "user '%s' is owner of zero or several accounts. Specify account identifier!",
                                                         workspace.getId(),
-                                                        workspace.getOwner()));
+                                                        workspace.getNamespace()));
                 }
                 // account detection is completed
                 // if user is owner of a single account add workspace to it
@@ -114,10 +114,10 @@ public class AccountWorkspaceHooks implements WorkspaceHooks {
     }
 
     @Override
-    public void beforeCreate(@NotNull UsersWorkspace workspace, @Nullable String accountId) throws NotFoundException, ServerException {}
+    public void beforeCreate(@NotNull Workspace workspace, @Nullable String accountId) throws NotFoundException, ServerException {}
 
     @Override
-    public void afterCreate(@NotNull UsersWorkspace workspace, @Nullable String accountId) throws ServerException {}
+    public void afterCreate(@NotNull Workspace workspace, @Nullable String accountId) throws ServerException {}
 
     /**
      * Removes workspace from account if necessary(workspace is related to any account).

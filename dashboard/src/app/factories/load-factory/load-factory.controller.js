@@ -95,7 +95,7 @@ export class LoadFactoryCtrl {
     switch (createPolicy) {
       case 'perUser' :
         workspace = this.lodash.find(this.workspaces, (w) => {
-          return this.factory.id === w.config.attributes.factoryId;
+          return this.factory.id === w.attributes.factoryId;
         });
         break;
       case 'perAccount' :
@@ -134,11 +134,11 @@ export class LoadFactoryCtrl {
   createWorkspace() {
     let config = this.factory.workspace;
     //set factory attribute:
-    config.attributes.factoryId = this.factory.id;
+    let attrs = {factoryId: this.factory.id};
     config.name = this.getWorkspaceName(config.name);
 
     //TODO: fix account when ready:
-    let creationPromise = this.cheAPI.getWorkspace().createWorkspaceFromConfig(null, config);
+    let creationPromise = this.cheAPI.getWorkspace().createWorkspaceFromConfig(null, config, attrs);
     creationPromise.then((data) => {
       this.$timeout(() => {
         this.startWorkspace(data);

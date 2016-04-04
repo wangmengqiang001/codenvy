@@ -21,10 +21,10 @@ import com.google.inject.name.Named;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.rest.HttpJsonRequestFactory;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
-import org.eclipse.che.api.workspace.shared.dto.UsersWorkspaceDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public class WorkspaceInfoCache {
     private static final Logger LOG = LoggerFactory.getLogger(WorkspaceInfoCache.class);
 
-    private final LoadingCache<Key, UsersWorkspace> workspaceCache;
+    private final LoadingCache<Key, Workspace> workspaceCache;
 
     @Inject
     public WorkspaceInfoCache(WorkspaceCacheLoader cacheLoader) {
@@ -62,7 +62,7 @@ public class WorkspaceInfoCache {
      * @throws ServerException
      * @throws NotFoundException
      */
-    public UsersWorkspace getByName(String wsName, String wsOwner) throws ServerException, NotFoundException {
+    public Workspace getByName(String wsName, String wsOwner) throws ServerException, NotFoundException {
         try {
             return doGet(new Key(wsName, wsOwner, false));
         } catch (ExecutionException e) {
@@ -82,7 +82,7 @@ public class WorkspaceInfoCache {
      * @throws ServerException
      * @throws NotFoundException
      */
-    public UsersWorkspace getById(String id) throws ServerException, NotFoundException {
+    public Workspace getById(String id) throws ServerException, NotFoundException {
         try {
             return doGet(new Key(id, null, true));
         } catch (ExecutionException e) {
@@ -116,23 +116,23 @@ public class WorkspaceInfoCache {
         workspaceCache.invalidate(new Key(wsName, wsName, false));
     }
 
-    private UsersWorkspace doGet(Key key) throws ServerException, NotFoundException, ExecutionException {
-        UsersWorkspace workspace = workspaceCache.get(key);
+    private Workspace doGet(Key key) throws ServerException, NotFoundException, ExecutionException {
+        Workspace workspace = workspaceCache.get(key);
         if (workspace.isTemporary()) {
-            if (workspace.getConfig().getAttributes().containsKey("allowAnyoneAddMember")) {
+            if (workspace.getAttributes().containsKey("allowAnyoneAddMember")) {
                 return workspace;
             }
             workspaceCache.invalidate(key);
             workspaceCache.invalidate(key.isUuid ?
                                       new Key(workspace.getConfig().getName(), null, false) :
-                                      new Key(workspace.getId(), workspace.getOwner(), true));
+                                      new Key(workspace.getId(), workspace.getNamespace(), true));
             workspace = workspaceCache.get(key);
         }
         return workspace;
 
     }
 
-    public abstract static class WorkspaceCacheLoader extends CacheLoader<Key, UsersWorkspace> {
+    public abstract static class WorkspaceCacheLoader extends CacheLoader<Key, Workspace> {
 
     }
 
@@ -144,7 +144,7 @@ public class WorkspaceInfoCache {
         WorkspaceManager manager;
 
         @Override
-        public UsersWorkspace load(Key key) throws Exception {
+        public Workspace load(Key key) throws Exception {
             LOG.debug("Load {} from manager ", key.key);
             try {
                 if (key.isUuid) {
@@ -172,7 +172,7 @@ public class WorkspaceInfoCache {
         HttpJsonRequestFactory requestFactory;
 
         @Override
-        public UsersWorkspace load(Key key) throws Exception {
+        public Workspace load(Key key) throws Exception {
             LOG.debug("Load {} from manager ", key.key);
             try {
                 String getWorkspaceUrl;
@@ -185,7 +185,7 @@ public class WorkspaceInfoCache {
                 return requestFactory.fromUrl(apiEndpoint.resolve(getWorkspaceUrl).toString())
                                      .useGetMethod()
                                      .request()
-                                     .asDto(UsersWorkspaceDto.class);
+                                     .asDto(WorkspaceDto.class);
             } catch (Exception e) {
                 LOG.warn("Not able to get information for {} - {}", key.key, key.isUuid);
                 LOG.debug(e.getLocalizedMessage(), e);

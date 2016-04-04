@@ -29,7 +29,7 @@ import org.eclipse.che.api.account.server.dao.Member;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.slf4j.Logger;
@@ -368,7 +368,7 @@ public class AccountDaoImpl implements AccountDao {
         } else {
             workspaceIds = asStringList(accountObject.get("workspaces"));
         }
-        List<UsersWorkspace> workspaces = new ArrayList<>(workspaceIds.size());
+        List<Workspace> workspaces = new ArrayList<>(workspaceIds.size());
         for (String workspaceId : workspaceIds) {
             workspaces.add(workspaceDao.get(workspaceId));
         }
@@ -401,7 +401,7 @@ public class AccountDaoImpl implements AccountDao {
                                   .append("name", account.getName())
                                   .append("workspaces", asDBList(account.getWorkspaces()
                                                                         .stream()
-                                                                        .map(UsersWorkspace::getId)
+                                                                        .map(Workspace::getId)
                                                                         .collect(toList())))
                                   .append("attributes", asDBList(account.getAttributes()));
     }

@@ -70,7 +70,7 @@ public class StackImplCodec implements Codec<StackImpl> {
         WorkspaceConfig workspaceConfig = null;
         Document workspaceDocument = (Document)document.get("workspaceConfig");
         if (workspaceDocument != null) {
-            workspaceConfig = UsersWorkspaceImplCodec.asWorkspaceConfig(workspaceDocument);
+            workspaceConfig = WorkspaceImplCodec.asWorkspaceConfig(workspaceDocument);
         }
 
         StackSource source = null;
@@ -127,7 +127,7 @@ public class StackImplCodec implements Codec<StackImpl> {
 
         WorkspaceConfigImpl workspaceConfig = stack.getWorkspaceConfig();
         if (workspaceConfig != null) {
-            Document workspaceConfigDocument = UsersWorkspaceImplCodec.asDocument(new WorkspaceConfigImpl(workspaceConfig));
+            Document workspaceConfigDocument = WorkspaceImplCodec.asDocument(new WorkspaceConfigImpl(workspaceConfig));
             document.append("workspaceConfig", workspaceConfigDocument);
         }
 

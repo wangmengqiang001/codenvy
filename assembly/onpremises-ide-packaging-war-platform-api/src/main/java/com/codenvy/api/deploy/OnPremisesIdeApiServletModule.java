@@ -49,7 +49,7 @@ public class OnPremisesIdeApiServletModule extends ServletModule {
                "/gae-validator/*",
                "/gae-parameters/*")
                 .through(com.codenvy.service.http.WorkspaceIdEnvironmentInitializationFilter.class);
-        filterRegex("^/workspace/(?!config$|runtime$|name/).+")
+        filterRegex("^/workspace/(?!config$|runtime$|.*:.*$).+")
                 .through(com.codenvy.service.http.WorkspaceIdEnvironmentInitializationFilter.class);
         filterRegex("^/(account|creditcard)/(?!find|list).+").through(new AccountIdEnvironmentInitializationFilter(),
                                                                       ImmutableMap.of("accountIdPosition", "3"));

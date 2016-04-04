@@ -119,7 +119,6 @@ public class MongoDBFactoryStoreTest {
                                                                                          .withDescription("description")
                                                                                          .withName("name")
                                                                                          .withPath("/path")))
-                                       .withAttributes(singletonMap("key", "value"))
                                        .withCommands(singletonList(DtoFactory.getInstance().createDto(CommandDto.class)
                                                                              .withName("command1")
                                                                              .withType("maven")

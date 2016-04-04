@@ -17,8 +17,8 @@ package com.codenvy.api.workspace;
 import com.codenvy.api.workspace.LimitsCheckingWorkspaceManager.WorkspaceCallback;
 import com.google.common.collect.ImmutableList;
 
-import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.workspace.server.model.impl.UsersWorkspaceImpl;
+import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.testng.annotations.Test;
 
 import static com.codenvy.api.workspace.TestObjects.createConfig;
@@ -38,20 +38,21 @@ import static org.mockito.Mockito.verify;
  */
 public class LimitsCheckingWorkspaceManagerTest {
 
-    @Test(expectedExceptions = BadRequestException.class,
+    @Test(expectedExceptions = LimitExceededException.class,
           expectedExceptionsMessageRegExp = "The maximum workspaces allowed per user is set to '2' and you are currently at that limit. " +
                                             "This value is set by your admin with the 'limits.user.workspaces.count' property")
     public void shouldNotBeAbleToCreateNewWorkspaceIfLimitIsExceeded() throws Exception {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2, // <- workspaces max count
                                                                                               "2gb",
+                                                                                              "1gb",
                                                                                               null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
                                                                                               null));
-        doReturn(ImmutableList.of(mock(UsersWorkspaceImpl.class), mock(UsersWorkspaceImpl.class))) // <- currently used 2
-                .when(manager)
-                .getWorkspaces(anyString());
+        doReturn(ImmutableList.of(mock(WorkspaceImpl.class), mock(WorkspaceImpl.class))) // <- currently used 2
+                                                                                         .when(manager)
+                                                                                         .getWorkspaces(anyString());
 
         manager.checkCountAndPropagateCreation("user123", null);
     }
@@ -60,6 +61,7 @@ public class LimitsCheckingWorkspaceManagerTest {
     public void shouldCallCreateCallBackIfEverythingIsOkayWithLimits() throws Exception {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2, // <- workspaces max count
                                                                                               "2gb",
+                                                                                              "1gb",
                                                                                               null,
                                                                                               null,
                                                                                               null,
@@ -73,19 +75,20 @@ public class LimitsCheckingWorkspaceManagerTest {
         verify(callback).call();
     }
 
-    @Test(expectedExceptions = BadRequestException.class,
-          expectedExceptionsMessageRegExp = "This workspace cannot be started as it would exceed the maximum available RAM allocated to you." +
-                                            " Users are each currently allocated '2048mb' RAM across their active workspaces. " +
-                                            "This value is set by your admin with the 'limits.user.workspaces.ram' property")
+    @Test(expectedExceptions = LimitExceededException.class,
+          expectedExceptionsMessageRegExp = "This workspace cannot be started as it would exceed the maximum available RAM " +
+                                            "allocated to you. Users are each currently allocated '2048mb' RAM across their active " +
+                                            "workspaces. This value is set by your admin with the 'limits.user.workspaces.ram' property")
     public void shouldNotBeAbleToStartNewWorkspaceIfRamLimitIsExceeded() throws Exception {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
                                                                                               "2gb", // <- workspaces ram limit
+                                                                                              "1gb",
                                                                                               null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
                                                                                               null));
-        doReturn(singletonList(createRuntime("1gb", "1gb"))).when(manager).getRuntimeWorkspaces(anyString()); // <- currently running 2gb
+        doReturn(singletonList(createRuntime("1gb", "1gb"))).when(manager).getWorkspaces(anyString()); // <- currently running 2gb
 
         manager.checkRamAndPropagateStart(createConfig("1gb"), null, "user123", null);
     }
@@ -94,16 +97,66 @@ public class LimitsCheckingWorkspaceManagerTest {
     public void shouldCallStartCallbackIfEverythingIsOkayWithLimits() throws Exception {
         final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
                                                                                               "3gb", // <- workspaces ram limit
+                                                                                              "1gb",
                                                                                               null,
                                                                                               null,
                                                                                               null,
                                                                                               null,
                                                                                               null));
-        doReturn(singletonList(createRuntime("1gb", "1gb"))).when(manager).getRuntimeWorkspaces(anyString()); // <- currently running 2gb
+        doReturn(singletonList(createRuntime("1gb", "1gb"))).when(manager).getWorkspaces(anyString()); // <- currently running 2gb
 
-        final WorkspaceCallback callback =  mock(WorkspaceCallback.class);
+        final WorkspaceCallback callback = mock(WorkspaceCallback.class);
         manager.checkRamAndPropagateStart(createConfig("1gb"), null, "user123", callback);
 
         verify(callback).call();
+    }
+
+    @Test(expectedExceptions = LimitExceededException.class,
+          expectedExceptionsMessageRegExp = "The maximum RAM per workspace is set to '2048mb' and you requested '3072mb'. " +
+                                            "This value is set by your admin with the 'limits.workspace.env.ram' property")
+    public void shouldNotBeAbleToCreateWorkspaceWhichExceedsRamLimit() throws Exception {
+        final WorkspaceConfig config = createConfig("3gb");
+        final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
+                                                                                              "3gb",
+                                                                                              "2gb", // <- workspaces env ram limit
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null));
+
+        manager.checkMaxEnvironmentRam(config);
+    }
+
+    @Test(expectedExceptions = LimitExceededException.class,
+          expectedExceptionsMessageRegExp = "The maximum RAM per workspace is set to '2048mb' and you requested '2304mb'. " +
+                                            "This value is set by your admin with the 'limits.workspace.env.ram' property")
+    public void shouldNotBeAbleToCreateWorkspaceWithMultipleMachinesWhichExceedsRamLimit() throws Exception {
+        final WorkspaceConfig config = createConfig("1gb", "1gb", "256mb");
+
+        final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
+                                                                                              "3gb",
+                                                                                              "2gb", // <- workspaces env ram limit
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null));
+        manager.checkMaxEnvironmentRam(config);
+    }
+
+    @Test
+    public void shouldBeAbleToCreateWorkspaceWithMultipleMachinesWhichDoesNotExceedRamLimit() throws Exception {
+        final WorkspaceConfig config = createConfig("1gb", "1gb", "256mb");
+
+        final LimitsCheckingWorkspaceManager manager = spy(new LimitsCheckingWorkspaceManager(2,
+                                                                                              "3gb",
+                                                                                              "3gb", // <- workspaces env ram limit
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null,
+                                                                                              null));
+        manager.checkMaxEnvironmentRam(config);
     }
 }

@@ -110,20 +110,21 @@
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${project.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
-                                    <replacevalue>CURRENT_DIR=$(pwd)
+                                    <replacevalue>
                                         cd ~/codenvy-im
 
-                                        if [ -f "codenvy-cli-update-script.sh" ]; then
-                                        echo "Installation Manager CLI is being updated ..."
-                                        bash codenvy-cli-update-script.sh $@
-                                        exit
+                                        if [ -f "update-im-cli" ]; then
+                                           echo "Installation Manager CLI is being updated ..."
+                                           bash update-im-cli $@
+                                           exit
                                         fi
 
-                                        cd ${CURRENT_DIR}
+                                        cd - &amp;>/dev/null
 
                                         if [ -f ~/.bashrc ]; then
-                                        source ~/.bashrc
+                                           source ~/.bashrc
                                         fi
+
                                         main "$@"</replacevalue>
                                 </replace>
                                 <delete>

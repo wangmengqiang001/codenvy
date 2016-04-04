@@ -10,6 +10,7 @@
 # --systemAdminName=<SYSTEM ADMIN NAME>
 # --systemAdminPassword=<SYSTEM ADMIN PASSWORD>
 # --fair-source-license=accept
+# --install-directory=<PATH_TO_SINGLE_DIRECTORY_FOR_ALL_RESOURCES>
 
 trap cleanUp EXIT
 
@@ -22,6 +23,8 @@ JRE_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.
 
 PUPPET_AGENT_PACKAGE=puppet-3.8.6-1.el7.noarch
 PUPPET_SERVER_PACKAGE=puppet-server-3.8.6-1.el7.noarch
+
+INSTALL_DIRECTORY=$PWD
 
 EXTERNAL_DEPENDENCIES=("https://codenvy.com||0"
                        "https://install.codenvycorp.com||0"
@@ -111,15 +114,17 @@ setRunOptions() {
         elif [[ "$var" == "--im-cli" ]]; then
             ARTIFACT="installation-manager-cli"
         elif [[ "$var" =~ --version=.* ]]; then
-            VERSION=`echo "$var" | sed -e "s/--version=//g"`
+            VERSION=$(echo "$var" | sed -e "s/--version=//g")
         elif [[ "$var" =~ --hostname=.* ]]; then
-            HOST_NAME=`echo "$var" | sed -e "s/--hostname=//g"`
+            HOST_NAME=$(echo "$var" | sed -e "s/--hostname=//g")
         elif [[ "$var" =~ --systemAdminName=.* ]]; then
-            SYSTEM_ADMIN_NAME=`echo "$var" | sed -e "s/--systemAdminName=//g"`
+            SYSTEM_ADMIN_NAME=$(echo "$var" | sed -e "s/--systemAdminName=//g")
         elif [[ "$var" =~ --systemAdminPassword=.* ]]; then
-            SYSTEM_ADMIN_PASSWORD=`echo "$var" | sed -e "s/--systemAdminPassword=//g"`
+            SYSTEM_ADMIN_PASSWORD=$(echo "$var" | sed -e "s/--systemAdminPassword=//g")
         elif [[ "$var" =~ --fair-source-license=accept ]]; then
             FAIR_SOURCE_LICENSE_ACCEPTED=true
+        elif [[ "$var" =~ --install-directory=.* ]]; then
+            INSTALL_DIRECTORY=$(echo "$var" | sed -e "s/--install-directory=//g")
         fi
     done
 
@@ -155,7 +160,7 @@ fetchProperty() {
     local url=$1
     local property=$2
     local seq="s/.*\"${property}\":\"\([^\"]*\)\".*/\1/"
-    echo `curl -s ${url} | sed ${seq}`
+    echo $(curl -s ${url} | sed ${seq})
 }
 
 # run specific function and don't break installation if connection lost
@@ -267,7 +272,7 @@ updateDownloadProgress() {
         local size
         local localFile="${HOME}/codenvy-im-data/updates/${ARTIFACT}/${VERSION}/${file}"
         if [[ -f ${localFile} ]]; then
-            size=`du -b ${localFile} | cut -f1`
+            size=$(du -b ${localFile} | cut -f1)
         else
             size=0
         fi
@@ -315,7 +320,7 @@ doInstallCodenvy() {
 
             # if error occurred not because of internet access lost then break installation
             # it prevents breaking installation due to a lot of puppet errors
-            local checkFailed=`cat /tmp/im_internet_access_lost 2>/dev/null`
+            local checkFailed=$(cat /tmp/im_internet_access_lost 2>/dev/null)
             if [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
                 echo "Repeating installation step "${STEP} >> install.log
                 continue;
@@ -334,7 +339,7 @@ downloadConfig() {
     # check url to config on http error
     http_code=$(curl --silent --write-out '%{http_code}' --output /dev/null ${url})
     if [[ ! ${http_code} -eq 200 ]]; then    # if response code != "200 OK"
-        local updates=`curl --silent "https://codenvy.com/update/repository/updates/${ARTIFACT}"`
+        local updates=$(curl --silent "https://codenvy.com/update/repository/updates/${ARTIFACT}")
         println $(printError "ERROR: Version '${VERSION}' is not available")
         println
         if [[ -n ${VERSION} ]] && [[ ! ${updates} =~ .*\"${VERSION}\".* ]]; then
@@ -392,7 +397,7 @@ preConfigureSystem() {
     validateExitCode $?
     
     # back up file to prevent installation with wrong configuration
-    if [[ -f ${CONFIG} ]] && [[ ! `cat ${CONFIG}` =~ .*${VERSION}.* ]]; then
+    if [[ -f ${CONFIG} ]] && [[ ! $(cat ${CONFIG}) =~ .*${VERSION}.* ]]; then
         mv ${CONFIG} ${CONFIG}.back
     fi
 
@@ -472,8 +477,8 @@ updateFooter() {
         cursorUp
         
         for ((line=4; line>=1; line--));  do
-            local prev_text=`cat /tmp/im_prev_line_${line} 2>/dev/null`
-            local text=`cat /tmp/im_line_${line} 2>/dev/null | tail -1`
+            local prev_text=$(cat /tmp/im_prev_line_${line} 2>/dev/null)
+            local text=$(cat /tmp/im_line_${line} 2>/dev/null | tail -1)
             
             if [[ ! ${prev_text} == ${text} ]]; then
                 clearLine
@@ -524,7 +529,7 @@ println() {
 
 askProperty() {
     read VALUE
-    echo ${VALUE}
+    echo "${VALUE}"
 }
 
 insertProperty() {
@@ -654,20 +659,20 @@ doValidatePort() {
 
 doGetHostsVariables() {
     HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
-    PUPPET_MASTER_HOST_NAME=`grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    DATA_HOST_NAME=`grep data_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    API_HOST_NAME=`grep api_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    BUILDER_HOST_NAME=`grep builder_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    RUNNER_HOST_NAME=`grep runner_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    DATASOURCE_HOST_NAME=`grep datasource_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    ANALYTICS_HOST_NAME=`grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '='`
-    SITE_HOST_NAME=`grep site_host_name=.* ${CONFIG} | cut -f2 -d '='`
+    PUPPET_MASTER_HOST_NAME=$(grep puppet_master_host_name=.* ${CONFIG} | cut -f2 -d '=')
+    DATA_HOST_NAME=$(grep data_host_name=.* ${CONFIG} | cut -f2 -d '=')
+    API_HOST_NAME=$(grep api_host_name=.* ${CONFIG} | cut -f2 -d '=')
+    BUILDER_HOST_NAME=$(grep builder_host_name=.* ${CONFIG} | cut -f2 -d '=')
+    RUNNER_HOST_NAME=$(grep runner_host_name=.* ${CONFIG} | cut -f2 -d '=')
+    DATASOURCE_HOST_NAME=$(grep datasource_host_name=.* ${CONFIG} | cut -f2 -d '=')
+    ANALYTICS_HOST_NAME=$(grep analytics_host_name=.* ${CONFIG} | cut -f2 -d '=')
+    SITE_HOST_NAME=$(grep site_host_name=.* ${CONFIG} | cut -f2 -d '=')
 }
 
 doCheckAvailablePorts_single() {
     for PORT in ${PUPPET_MASTER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]}; do
-        PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
-        PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
+        PROTOCOL=$(echo ${PORT}|awk -F':' '{print $1}');
+        PORT_ONLY=$(echo ${PORT}|awk -F':' '{print $2}');
 
         validatePortLocal "${PROTOCOL}" "${PORT_ONLY}"
     done
@@ -729,8 +734,8 @@ doCheckAvailablePorts_multi() {
         fi
 
         for PORT in ${PORTS[@]}; do
-            PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
-            PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
+            PROTOCOL=$(echo ${PORT}|awk -F':' '{print $1}');
+            PORT_ONLY=$(echo ${PORT}|awk -F':' '{print $2}');
 
             if [[ ${HOST} == ${PUPPET_MASTER_HOST_NAME} ]]; then
                 validatePortLocal "${PROTOCOL}" "${PORT_ONLY}"
@@ -826,13 +831,13 @@ doCheckAvailableResourcesLocally() {
     local osVersion=""
     local osInfo=""
 
-    case `uname` in
+    case $(uname) in
         Linux )
             # CentOS
             if [ -f /etc/redhat-release ] ; then
                 osType="CentOS"
-                osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/'`
-                osInfo=`cat /etc/redhat-release | sed 's/Linux release //'`
+                osVersion=$(cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/')
+                osInfo=$(cat /etc/redhat-release | sed 's/Linux release //')
 
             # SuSE
             elif [ -f /etc/SuSE-release ] ; then
@@ -840,7 +845,7 @@ doCheckAvailableResourcesLocally() {
 
             # debian
             elif [ -f /etc/debian_version ]; then
-                osInfo=`cat /etc/issue.net`
+                osInfo=$(cat /etc/issue.net)
 
             # other linux OS
             elif [ -f /etc/lsb-release ]; then
@@ -849,7 +854,7 @@ doCheckAvailableResourcesLocally() {
             ;;
 
         * )
-            osInfo=`uname`;
+            osInfo=$(uname);
             ;;
     esac
 
@@ -859,50 +864,53 @@ doCheckAvailableResourcesLocally() {
     fi
 
     local osInfoToDisplay=$(printf "%-30s" "${osInfo}")
-    local osStateToDisplay=$([ ${osIssueFound} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
+    local osStateToDisplay=$([ ${osIssueFound} == false ] && printSuccess "[OK]" || printError "[NOT OK]")
     println "DETECTED OS: ${osInfoToDisplay} ${osStateToDisplay}"
 
     local resourceIssueFound="none"
+    local writePermIssueFound=false
 
-    local availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
+    local availableRAM=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')
     local availableRAMIssue=false
-    local RAMStateToDisplay=$(echo "$(printSuccess "[OK]")")
+    local RAMStateToDisplay=$(printSuccess "[OK]")
 
-    local availableDiskSpace=`sudo df /home | tail -1 | awk '{print $4}'`  # available
+    local availableDiskSpace=$(sudo df /home | tail -1 | awk '{print $4}')  # available
     local availableDiskSpaceIssue=false
-    local diskStateToDisplay=$(echo "$(printSuccess "[OK]")")
+    local diskStateToDisplay=$(printSuccess "[OK]")
 
-    local availableCores=`grep -c ^processor /proc/cpuinfo`
+    local availableCores=$(grep -c ^processor /proc/cpuinfo)
     local availableCoresIssue=false
-    local coresStateToDisplay=$(echo "$(printSuccess "[OK]")")
+    local coresStateToDisplay=$(printSuccess "[OK]")
+
+    local writePermStateToDisplay=$(printf "%-44s" && printSuccess "[OK]")
 
     if (( ${availableRAM} < ${MIN_RAM_KB} )); then
         resourceIssueFound="blocker"
-        RAMStateToDisplay=$(echo "$(printError "[NOT OK]")")
+        RAMStateToDisplay=$(printError "[NOT OK]")
     elif (( ${availableRAM} < ${REC_RAM_KB} )); then
         [ ${resourceIssueFound} == "none" ] && resourceIssueFound="warning"
-        RAMStateToDisplay=$(echo "$(printWarning "[WARNING]")")
+        RAMStateToDisplay=$(printWarning "[WARNING]")
     fi
 
     if (( ${availableCores} < ${MIN_CORES})); then
         resourceIssueFound="blocker"
-        coresStateToDisplay=$(echo "$(printError "[NOT OK]")")
+        coresStateToDisplay=$(printError "[NOT OK]")
     elif (( ${availableCores} < ${REC_CORES} )); then
         [ ${resourceIssueFound} == "none" ] && resourceIssueFound="warning"
-        coresStateToDisplay=$(echo "$(printWarning "[WARNING]")")
+        coresStateToDisplay=$(printWarning "[WARNING]")
     fi
 
     if (( ${availableDiskSpace} < ${MIN_DISK_SPACE_KB})); then
         resourceIssueFound="blocker"
-        diskStateToDisplay=$(echo "$(printError "[NOT OK]")")
+        diskStateToDisplay=$(printError "[NOT OK]")
     elif (( ${availableDiskSpace} < ${REC_DISK_SPACE_KB} )); then
         [ ${resourceIssueFound} == "none" ] && resourceIssueFound="warning"
-        diskStateToDisplay=$(echo "$(printWarning "[WARNING]")")
+        diskStateToDisplay=$(printWarning "[WARNING]")
     fi
 
     local minRAMToDisplay=$(printf "%-15s" "$(echo ${MIN_RAM_KB} | awk '{tmp = $1/1000/1000; printf"%0.2f",tmp}') GB")
     local recRAMToDisplay=$(printf "%-15s" "$(echo ${REC_RAM_KB} | awk '{tmp = $1/1000/1000; printf"%0.2f",tmp}') GB")
-    local availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
+    local availableRAMToDisplay=$(cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}')
     local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
 
     local minCoresToDisplay=$(printf "%-15s" "${MIN_CORES} cores")
@@ -914,11 +922,17 @@ doCheckAvailableResourcesLocally() {
     local availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
     local availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
 
+    if (( $(touch "$INSTALL_DIRECTORY/tmp_file" &>/dev/null; echo $?; rm "$INSTALL_DIRECTORY/tmp_file" &>/dev/null) == 1 )); then
+        writePermIssueFound=true
+        writePermStateToDisplay=$(printf "%-44s" && printError "[NOT OK]")
+    fi
+
     println
-    println "                MINIMUM        RECOMMENDED     AVAILABLE"
-    println "RAM             $minRAMToDisplay $recRAMToDisplay $availableRAMToDisplay $RAMStateToDisplay"
-    println "CPU             $minCoresToDisplay $recCoresToDisplay $availableCoresToDisplay $coresStateToDisplay"
-    println "Disk Space      $minDiskSpaceToDisplay $recDiskSpaceToDisplay $availableDiskSpaceToDisplay $diskStateToDisplay"
+    println "                 MINIMUM        RECOMMENDED     AVAILABLE"
+    println "RAM              $minRAMToDisplay $recRAMToDisplay $availableRAMToDisplay $RAMStateToDisplay"
+    println "CPU              $minCoresToDisplay $recCoresToDisplay $availableCoresToDisplay $coresStateToDisplay"
+    println "Disk Space       $minDiskSpaceToDisplay $recDiskSpaceToDisplay $availableDiskSpaceToDisplay $diskStateToDisplay"
+    println "Write Permission $writePermStateToDisplay"
     println
 
     if [[ ${osIssueFound} == true ]]; then
@@ -926,6 +940,11 @@ doCheckAvailableResourcesLocally() {
         println
         println $(printWarning "NOTE: You need a CentOS 7.1 node.")
         exit 1;
+    fi
+
+    if [[ ${writePermIssueFound} == true ]]; then
+        println "$(printError "ERROR: Installation directory \"")$(printImportantLink $INSTALL_DIRECTORY)$(printError "\" cannot be written to.")"
+        exit 1
     fi
 
     if [[ ! ${resourceIssueFound} == "none" ]]; then
@@ -967,8 +986,8 @@ checkResourceAccess() {
 doCheckResourceAccess() {
     local resource=$1
     local printStatus=$2
-    local url=`echo ${resource} | awk -F'|' '{print $1}'`;
-    local cookie=`echo ${resource} | awk -F'|' '{print $2}'`;
+    local url=$(echo ${resource} | awk -F'|' '{print $1}');
+    local cookie=$(echo ${resource} | awk -F'|' '{print $2}');
     local checkFailed=0
 
     if [[ ${cookie} == "" ]]; then
@@ -978,7 +997,7 @@ doCheckResourceAccess() {
     fi
 
     if [[ ${printStatus} == true ]]; then
-        local checkStatus=$([ ${checkFailed} == 0 ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
+        local checkStatus=$([[ ${checkFailed} == 0 ]] && echo $(printSuccess "[OK]") || echo $(printError "[NOT OK]"))
         println "$(printf "%-${DEPENDENCIES_STATUS_OFFSET}s" ${url}) ${checkStatus}"
     fi
 
@@ -1132,29 +1151,29 @@ doCheckAvailableResourcesOnNodes() {
         local osVersion=""
         local osInfo=""
 
-        case `${sshPrefix} "uname" | sed 's/\r//'` in
+        case $(${sshPrefix} "uname" | sed 's/\r//') in
             Linux )
-                if [[ `${sshPrefix} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                if [[ $(${sshPrefix} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//') == 1 ]]; then
                     osType="CentOS";
-                    osVersion=`${sshPrefix} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/'`
-                    osInfo=`${sshPrefix} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
+                    osVersion=$(${sshPrefix} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/')
+                    osInfo=$(${sshPrefix} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//')
 
                 # SuSE
-                elif [[ `${sshPrefix} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                elif [[ $(${sshPrefix} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//') == 1 ]]; then
                     osInfo="SuSE"
 
                 # debian
-                elif [[ `${sshPrefix} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osInfo=`${sshPrefix} "cat /etc/issue.net" | sed 's/\r//'`
+                elif [[ $(${sshPrefix} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//') == 1 ]]; then
+                    osInfo=$(${sshPrefix} "cat /etc/issue.net" | sed 's/\r//')
 
                 # other linux OS
-                elif [[ `${sshPrefix} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osInfo=`${sshPrefix} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
+                elif [[ $(${sshPrefix} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//') == 1 ]]; then
+                    osInfo=$(${sshPrefix} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//')
                 fi
                 ;;
 
             * )
-                osInfo=`${sshPrefix} "uname" | sed 's/\r//'`;
+                osInfo=$(${sshPrefix} "uname" | sed 's/\r//');
                 ;;
         esac
 
@@ -1164,10 +1183,10 @@ doCheckAvailableResourcesOnNodes() {
             globalOsIssueFound=true
         fi
 
-        local availableRAM=`${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        local availableRAM=$(${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}')
         local availableRAMIssue=false
 
-        local availableDiskSpace=`${sshPrefix} "sudo df ${HOME} | tail -1" | awk '{print $4}'` # available
+        local availableDiskSpace=$(${sshPrefix} "sudo df ${HOME} | tail -1" | awk '{print $4}') # available
         local availableDiskSpaceIssue=false
 
         if [[ -z ${availableRAM} || ${availableRAM} < ${MIN_RAM_KB} ]]; then
@@ -1195,7 +1214,7 @@ doCheckAvailableResourcesOnNodes() {
 
                 if [[ ${availableRAMIssue} == true ]]; then
                     local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
-                    local availableRAMToDisplay=`${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
+                    local availableRAMToDisplay=$(${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}')
                     local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
 
                     println "> RAM             $minRAMToDisplay $availableRAMToDisplay $(printWarning "[WARNING]")"
@@ -1246,7 +1265,7 @@ setStepIndicator() {
 
 ################ Timer
 initTimer() {
-    START_TIME=`date +%s`
+    START_TIME=$(date +%s)
 }
 
 runTimer() {
@@ -1274,7 +1293,7 @@ pauseTimer() {
 
 updateTimer() {
     for ((;;)); do
-        END_TIME=`date +%s`
+        END_TIME=$(date +%s)
         DURATION=$(( $END_TIME-$START_TIME))
         M=$(( $DURATION/60 ))
         S=$(( $DURATION%60 ))
@@ -1412,7 +1431,7 @@ updateInternetAccessChecker() {
     for ((;;)); do
         doUpdateInternetAccessChecker
         local checkFailed=$?
-        local tmp=`cat /tmp/im_current_step 2>/dev/null`
+        local tmp=$(cat /tmp/im_current_step 2>/dev/null)
 
         if [[ "${tmp}" =~ ^[0-9]*$ ]]; then
             CURRENT_STEP=${tmp}
@@ -1433,7 +1452,7 @@ doUpdateInternetAccessChecker() {
     local checkFailed=0
 
     for resource in ${EXTERNAL_DEPENDENCIES[@]}; do
-        local isRequiredToCheck=`echo ${resource} | awk -F'|' '{print $3}'`;
+        local isRequiredToCheck=$(echo ${resource} | awk -F'|' '{print $3}');
 
         if [[ ${isRequiredToCheck} == 1 ]]; then
             doCheckResourceAccess ${resource} ${printStatus} || checkFailed=1
@@ -1449,14 +1468,14 @@ doUpdateInternetAccessChecker() {
 
 printPostInstallInfo_codenvy() {
     if [ -z ${SYSTEM_ADMIN_NAME} ]; then
-        SYSTEM_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
+        SYSTEM_ADMIN_NAME=$(grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2)
     fi
 
     if [ -z ${SYSTEM_ADMIN_PASSWORD} ]; then
         if [[ "${VERSION}" =~ ^(4).* ]]; then
-            SYSTEM_ADMIN_PASSWORD=`grep admin_ldap_password= ${CONFIG} | cut -d '=' -f2`
+            SYSTEM_ADMIN_PASSWORD=$(grep admin_ldap_password= ${CONFIG} | cut -d '=' -f2)
         else
-            SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
+            SYSTEM_ADMIN_PASSWORD=$(grep system_ldap_password= ${CONFIG} | cut -d '=' -f2)
         fi
     fi
 
@@ -1466,8 +1485,8 @@ printPostInstallInfo_codenvy() {
 
     println
     println "Codenvy is ready: $(printImportantLink "http://$HOST_NAME")"
-    println "Admin user name:  $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
-    println "Admin password:   $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
+    println "Admin user name:  $(printImportantInfo $SYSTEM_ADMIN_NAME)"
+    println "Admin password:   $(printImportantInfo $SYSTEM_ADMIN_PASSWORD)"
     println
     println "$(printWarning "!!! Set up DNS or add a hosts rule on your clients to reach this hostname.")"
 }

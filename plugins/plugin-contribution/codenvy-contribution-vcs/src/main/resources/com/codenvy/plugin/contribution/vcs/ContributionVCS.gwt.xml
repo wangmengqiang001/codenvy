@@ -23,7 +23,7 @@
     <inherits name="com.google.gwt.inject.Inject"/>
 
     <inherits name='org.eclipse.che.ide.ext.git.Git'/>
-    <inherits name='org.eclipse.che.ide.ext.github.GitHub'/>
+    <inherits name='org.eclipse.che.plugin.github.GitHub'/>
     <inherits name='org.eclipse.che.ide.ext.bitbucket.Bitbucket'/>
     <inherits name='org.eclipse.che.ide.ext.microsoft.Microsoft'/>
 </module>

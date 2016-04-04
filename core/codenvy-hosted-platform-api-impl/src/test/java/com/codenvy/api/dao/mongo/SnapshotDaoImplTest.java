@@ -195,10 +195,10 @@ public class SnapshotDaoImplTest {
         final SnapshotImpl.SnapshotBuilder builder = createSnapshotBuilder();
         final SnapshotImpl snapshot1 = builder.build();
         final SnapshotImpl snapshot2 = builder.generateId().setEnvName("env44").build();
-        final SnapshotImpl snapshot3 = builder.generateId().setEnvName("ev55").setOwner("ow2").build();
+        final SnapshotImpl snapshot3 = builder.generateId().setEnvName("ev55").setNamespace("ow2").build();
         collection.insertMany(asList(snapshot1, snapshot2, snapshot3));
         //when
-        final List<SnapshotImpl> result = snapshotDao.findSnapshots(snapshot1.getOwner(),snapshot1.getWorkspaceId());
+        final List<SnapshotImpl> result = snapshotDao.findSnapshots(snapshot1.getNamespace(),snapshot1.getWorkspaceId());
        //then
         assertEquals(new HashSet<>(result), new HashSet<>(asList(snapshot1, snapshot2)));
     }
@@ -208,7 +208,7 @@ public class SnapshotDaoImplTest {
         assertTrue(snapshotDao.findSnapshots("test-user", "wsid-1232").isEmpty());
     }
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Snapshot owner must not be null")
+    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Snapshot namespace must not be null")
     public void testGetSnapshotByOwnerWhenOwnerIsNull() throws Exception {
         snapshotDao.findSnapshots(null, "wsid-1232");
     }
@@ -247,7 +247,7 @@ public class SnapshotDaoImplTest {
         assertEquals(result.getString("machineName"), snapshot.getMachineName(), "Machine name");
         assertEquals(result.getString("envName"), snapshot.getEnvName(), "Environment name");
         assertEquals(result.getString("type"), snapshot.getType(), "Snapshot type");
-        assertEquals(result.getString("owner"), snapshot.getOwner(), "Snapshot owner");
+        assertEquals(result.getString("namespace"), snapshot.getNamespace(), "Snapshot owner");
         assertEquals(result.getBoolean("isDev").booleanValue(), snapshot.isDev(), "Snapshot isdev");
         assertEquals(result.getLong("creationDate").longValue(), snapshot.getCreationDate(), "Snapshot creation date");
         assertEquals(result.getString("type"), snapshot.getType(), "Snapshot defaultEnvName");
@@ -316,7 +316,7 @@ public class SnapshotDaoImplTest {
                            .generateId()
                            .setType("docker")
                            .setInstanceKey(new InstanceKeyImpl(ImmutableMap.of("field", "value")))
-                           .setOwner("user123")
+                           .setNamespace("user123")
                            .setWorkspaceId("workspace123")
                            .setMachineName("machine123")
                            .setEnvName("env123")

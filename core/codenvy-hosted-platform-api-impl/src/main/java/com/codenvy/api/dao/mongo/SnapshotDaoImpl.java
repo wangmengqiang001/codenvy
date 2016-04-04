@@ -101,11 +101,11 @@ public class SnapshotDaoImpl implements SnapshotDao {
     }
 
     @Override
-    public List<SnapshotImpl> findSnapshots(String owner, String workspaceId) throws SnapshotException {
-        requireNonNull(owner, "Snapshot owner must not be null");
+    public List<SnapshotImpl> findSnapshots(String namespace, String workspaceId) throws SnapshotException {
+        requireNonNull(namespace, "Snapshot namespace must not be null");
         requireNonNull(workspaceId, "Workspace id must not be null");
 
-        return collection.find(and(eq("workspaceId", workspaceId), eq("owner", owner))).into(new ArrayList<>());
+        return collection.find(and(eq("workspaceId", workspaceId), eq("namespace", namespace))).into(new ArrayList<>());
     }
 
     @Override

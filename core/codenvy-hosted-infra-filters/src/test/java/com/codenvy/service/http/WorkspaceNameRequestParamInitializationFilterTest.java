@@ -23,7 +23,7 @@ import static org.testng.Assert.assertEquals;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.commons.env.EnvironmentContext;
 
@@ -52,7 +52,7 @@ public class WorkspaceNameRequestParamInitializationFilterTest {
     @Mock
     WorkspaceInfoCache cache;
     @Mock
-    UsersWorkspace     workspace;
+    Workspace          workspace;
     @Mock
     WorkspaceConfig    workspaceConfig;
 

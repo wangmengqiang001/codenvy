@@ -74,7 +74,7 @@
         <version.license.header.artifactid>codenvy-codenvy-license-resource-bundle</version.license.header.artifactid>
         <version.license.header.groupid>com.codenvy.resources</version.license.header.groupid>
         <version.license.header.version>14</version.license.header.version>
-        <version.selenium>2.52.0</version.selenium>
+        <version.selenium>2.53.0</version.selenium>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -261,6 +261,16 @@
             <dependency>
                 <groupId>com.codenvy.hosted-infrastructure</groupId>
                 <artifactId>codenvy-hosted-subscription-saas</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.hosted-infrastructure</groupId>
+                <artifactId>codenvy-hosted-workspace-activity</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.codenvy.hosted-infrastructure</groupId>
+                <artifactId>codenvy-hosted-workspace-activity-agent</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -745,4 +755,28 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <repositories>
+        <repository>
+            <id>codenvy-public-repo</id>
+            <name>codenvy public</name>
+            <url>https://maven.codenvycorp.com/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>codenvy-public-snapshots-repo</id>
+            <name>codenvy public snapshots</name>
+            <url>https://maven.codenvycorp.com/content/repositories/codenvy-public-snapshots/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>codenvy-public-repo</id>
+            <name>codenvy public</name>
+            <url>https://maven.codenvycorp.com/content/groups/public/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>codenvy-public-snapshots-repo</id>
+            <name>codenvy public snapshots</name>
+            <url>https://maven.codenvycorp.com/content/repositories/codenvy-public-snapshots/</url>
+        </pluginRepository>
+    </pluginRepositories>
 </project>

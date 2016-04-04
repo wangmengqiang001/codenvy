@@ -19,19 +19,18 @@ import com.google.common.util.concurrent.Striped;
 
 import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.machine.MachineConfig;
 import org.eclipse.che.api.core.model.workspace.Environment;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.machine.server.MachineManager;
-import org.eclipse.che.api.workspace.server.RuntimeWorkspaceRegistry;
-import org.eclipse.che.api.workspace.server.WorkspaceConfigValidator;
+import org.eclipse.che.api.user.server.UserManager;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
-import org.eclipse.che.api.workspace.server.model.impl.RuntimeWorkspaceImpl;
-import org.eclipse.che.api.workspace.server.model.impl.UsersWorkspaceImpl;
+import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.env.EnvironmentContext;
@@ -45,6 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 
 import static java.lang.String.format;
+import static org.eclipse.che.api.core.model.workspace.WorkspaceStatus.STOPPED;
 
 /**
  * Manager that checks limits and delegates all its operations to the {@link WorkspaceManager}.
@@ -59,74 +59,67 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
     private static final Striped<Lock> START_LOCKS  = Striped.lazyWeakLock(100);
 
     private final int  workspacesPerUser;
+    private final long maxRamPerEnv;
     private final long ramPerUser;
 
     @Inject
     public LimitsCheckingWorkspaceManager(@Named("limits.user.workspaces.count") int workspacesPerUser,
                                           @Named("limits.user.workspaces.ram") String ramPerUser,
+                                          @Named("limits.workspace.env.ram") String maxRamPerEnv,
                                           WorkspaceDao workspaceDao,
-                                          RuntimeWorkspaceRegistry workspaceRegistry,
-                                          WorkspaceConfigValidator workspaceConfigValidator,
+                                          WorkspaceRuntimes runtimes,
                                           EventService eventService,
-                                          MachineManager machineManager) {
-        super(workspaceDao, workspaceRegistry, workspaceConfigValidator, eventService, machineManager);
+                                          MachineManager machineManager,
+                                          UserManager userManager) {
+        super(workspaceDao, runtimes, eventService, machineManager, userManager);
         this.workspacesPerUser = workspacesPerUser;
+        this.maxRamPerEnv = Size.parseSizeToMegabytes(maxRamPerEnv);
         this.ramPerUser = Size.parseSizeToMegabytes(ramPerUser);
     }
 
     @Override
-    public UsersWorkspaceImpl createWorkspace(WorkspaceConfig config,
-                                              String owner,
-                                              @Nullable String accountId) throws ForbiddenException,
-                                                                                 ServerException,
-                                                                                 BadRequestException,
-                                                                                 ConflictException,
-                                                                                 NotFoundException {
-        return checkCountAndPropagateCreation(owner, () -> super.createWorkspace(config, owner, accountId));
+    public WorkspaceImpl createWorkspace(WorkspaceConfig config,
+                                         String namespace,
+                                         @Nullable String accountId) throws ServerException,
+                                                                            ConflictException,
+                                                                            NotFoundException {
+        checkMaxEnvironmentRam(config);
+        return checkCountAndPropagateCreation(namespace, () -> super.createWorkspace(config, namespace, accountId));
     }
 
     @Override
-    public UsersWorkspaceImpl startWorkspaceById(String workspaceId,
-                                                 @Nullable String envName,
-                                                 @Nullable String accountId) throws NotFoundException,
-                                                                                    ServerException,
-                                                                                    BadRequestException,
-                                                                                    ForbiddenException,
-                                                                                    ConflictException {
-        final UsersWorkspaceImpl workspace = getWorkspace(workspaceId);
+    public WorkspaceImpl startWorkspace(String workspaceId,
+                                        @Nullable String envName,
+                                        @Nullable String accountId) throws NotFoundException,
+                                                                           ServerException,
+                                                                           ConflictException {
+        final WorkspaceImpl workspace = getWorkspace(workspaceId);
         return checkRamAndPropagateStart(workspace.getConfig(),
                                          envName,
-                                         workspace.getOwner(),
-                                         () -> super.startWorkspaceById(workspaceId, envName, accountId));
+                                         workspace.getNamespace(),
+                                         () -> super.startWorkspace(workspaceId, envName, accountId));
     }
 
     @Override
-    public UsersWorkspaceImpl startWorkspaceByName(String workspaceName,
-                                                   String owner,
-                                                   @Nullable String envName,
-                                                   @Nullable String accountId) throws NotFoundException,
-                                                                                      ServerException,
-                                                                                      BadRequestException,
-                                                                                      ForbiddenException,
-                                                                                      ConflictException {
-        final UsersWorkspaceImpl workspace = getWorkspace(workspaceName, owner);
-        return checkRamAndPropagateStart(workspace.getConfig(),
-                                         envName,
-                                         owner,
-                                         () -> super.startWorkspaceByName(workspaceName, owner, envName, accountId));
-    }
-
-    @Override
-    public RuntimeWorkspaceImpl startTemporaryWorkspace(WorkspaceConfig workspaceConfig,
-                                                        @Nullable String accountId) throws ServerException,
-                                                                                           BadRequestException,
-                                                                                           ForbiddenException,
-                                                                                           NotFoundException,
-                                                                                           ConflictException {
-        return checkRamAndPropagateStart(workspaceConfig,
-                                         workspaceConfig.getDefaultEnv(),
+    public WorkspaceImpl startWorkspace(WorkspaceConfig config,
+                                        String namespace,
+                                        boolean isTemporary,
+                                        @Nullable String accountId) throws ServerException,
+                                                                           NotFoundException,
+                                                                           ConflictException {
+        checkMaxEnvironmentRam(config);
+        return checkRamAndPropagateStart(config,
+                                         config.getDefaultEnv(),
                                          getCurrentUserId(),
-                                         () -> super.startTemporaryWorkspace(workspaceConfig, accountId));
+                                         () -> super.startWorkspace(config, namespace, isTemporary, accountId));
+    }
+
+    @Override
+    public WorkspaceImpl updateWorkspace(String id, Workspace update) throws ConflictException,
+                                                                             ServerException,
+                                                                             NotFoundException {
+        checkMaxEnvironmentRam(update.getConfig());
+        return super.updateWorkspace(id, update);
     }
 
     /**
@@ -135,8 +128,8 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
      */
     @FunctionalInterface
     @VisibleForTesting
-    interface WorkspaceCallback<T extends UsersWorkspaceImpl> {
-        T call() throws ConflictException, BadRequestException, ForbiddenException, NotFoundException, ServerException;
+    interface WorkspaceCallback<T extends WorkspaceImpl> {
+        T call() throws ConflictException, NotFoundException, ServerException;
     }
 
     /**
@@ -145,14 +138,12 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
      * performs {@code callback.call()} and returns its result.
      */
     @VisibleForTesting
-    <T extends UsersWorkspaceImpl> T checkRamAndPropagateStart(WorkspaceConfig config,
-                                                               String envName,
-                                                               String user,
-                                                               WorkspaceCallback<T> callback) throws BadRequestException,
-                                                                                                     ForbiddenException,
-                                                                                                     ServerException,
-                                                                                                     NotFoundException,
-                                                                                                     ConflictException {
+    <T extends WorkspaceImpl> T checkRamAndPropagateStart(WorkspaceConfig config,
+                                                          String envName,
+                                                          String user,
+                                                          WorkspaceCallback<T> callback) throws ServerException,
+                                                                                                NotFoundException,
+                                                                                                ConflictException {
         Optional<? extends Environment> envOptional = findEnv(config.getEnvironments(), envName);
         if (!envOptional.isPresent()) {
             envOptional = findEnv(config.getEnvironments(), config.getDefaultEnv());
@@ -163,17 +154,21 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
         final Lock lock = START_LOCKS.get(user);
         lock.lock();
         try {
-            final long currentlyUsedRamMB = getRuntimeWorkspaces(user).stream()
-                                                                      .map(ws -> ws.getActiveEnvironment().getMachineConfigs())
-                                                                      .mapToLong(this::sumRam)
-                                                                      .sum();
+            final long currentlyUsedRamMB = getWorkspaces(user).stream()
+                                                               .filter(ws -> STOPPED != ws.getStatus())
+                                                               .map(ws -> ws.getConfig()
+                                                                            .getEnvironment(ws.getRuntime().getActiveEnv())
+                                                                            .get()
+                                                                            .getMachineConfigs())
+                                                               .mapToLong(this::sumRam)
+                                                               .sum();
             final long allocating = sumRam(envOptional.get().getMachineConfigs());
             if (currentlyUsedRamMB + allocating > ramPerUser) {
-                throw new BadRequestException(format("This workspace cannot be started as it would exceed the maximum available RAM " +
-                                                     "allocated to you. Users are each currently allocated '%dmb' RAM across their " +
-                                                     "active workspaces. This value is set by your admin with the " +
-                                                     "'limits.user.workspaces.ram' property",
-                                                     ramPerUser));
+                throw new LimitExceededException(format("This workspace cannot be started as it would exceed the maximum available RAM " +
+                                                        "allocated to you. Users are each currently allocated '%dmb' RAM across their " +
+                                                        "active workspaces. This value is set by your admin with the " +
+                                                        "'limits.user.workspaces.ram' property",
+                                                        ramPerUser));
             }
             return callback.call();
         } finally {
@@ -187,28 +182,43 @@ public class LimitsCheckingWorkspaceManager extends WorkspaceManager {
      * performs {@code callback.call()} and returns its result.
      */
     @VisibleForTesting
-    <T extends UsersWorkspaceImpl> T checkCountAndPropagateCreation(String user,
-                                                                    WorkspaceCallback<T> callback) throws BadRequestException,
-                                                                                                          ForbiddenException,
-                                                                                                          ServerException,
-                                                                                                          NotFoundException,
-                                                                                                          ConflictException {
+    <T extends WorkspaceImpl> T checkCountAndPropagateCreation(String user,
+                                                               WorkspaceCallback<T> callback) throws ServerException,
+                                                                                                     NotFoundException,
+                                                                                                     ConflictException {
         // It is important to lock in this place because:
         // if workspace per user limit is 10 and user has 9, then if he sends 2 separate requests to create
         // a new workspace, it may create both of them, because workspace count check is not atomic one
         final Lock lock = CREATE_LOCKS.get(user);
         lock.lock();
         try {
-            final List<UsersWorkspaceImpl> workspaces = getWorkspaces(user);
+            final List<WorkspaceImpl> workspaces = getWorkspaces(user);
             if (workspaces.size() >= workspacesPerUser) {
-                throw new BadRequestException(format("The maximum workspaces allowed per user is set to '%d' and " +
-                                                     "you are currently at that limit. This value is set by your admin with the " +
-                                                     "'limits.user.workspaces.count' property",
-                                                     workspacesPerUser));
+                throw new LimitExceededException(format("The maximum workspaces allowed per user is set to '%d' and " +
+                                                        "you are currently at that limit. This value is set by your admin with the " +
+                                                        "'limits.user.workspaces.count' property",
+                                                        workspacesPerUser));
             }
             return callback.call();
         } finally {
             lock.unlock();
+        }
+    }
+
+    @VisibleForTesting
+    void checkMaxEnvironmentRam(WorkspaceConfig config) throws LimitExceededException {
+        for (Environment environment : config.getEnvironments()) {
+            final long workspaceRam = environment.getMachineConfigs()
+                                                 .stream()
+                                                 .filter(machineCfg -> machineCfg.getLimits() != null)
+                                                 .mapToInt(machineCfg -> machineCfg.getLimits().getRam())
+                                                 .sum();
+            if (workspaceRam > maxRamPerEnv) {
+                throw new LimitExceededException(format("The maximum RAM per workspace is set to '%dmb' and you requested '%dmb'. " +
+                                                        "This value is set by your admin with the 'limits.workspace.env.ram' property",
+                                                        maxRamPerEnv,
+                                                        workspaceRam));
+            }
         }
     }
 

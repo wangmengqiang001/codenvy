@@ -14,7 +14,7 @@
  */
 package com.codenvy.service.http;
 
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.eclipse.che.commons.env.EnvironmentContext;
 
 import org.slf4j.Logger;
@@ -52,7 +52,7 @@ public abstract class WorkspaceEnvironmentInitializationFilter implements Filter
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         try {
-            final UsersWorkspace workspace = getWorkspaceFromRequest(request);
+            final Workspace workspace = getWorkspaceFromRequest(request);
             if (workspace != null) {
                 final EnvironmentContext env = EnvironmentContext.getCurrent();
                 env.setWorkspaceName(workspace.getConfig().getName());
@@ -74,7 +74,7 @@ public abstract class WorkspaceEnvironmentInitializationFilter implements Filter
     }
 
     /**
-     * Retrieves {@link UsersWorkspace} from {@code request} if possible, otherwise returns {@code null}
+     * Retrieves {@link Workspace} from {@code request} if possible, otherwise returns {@code null}
      * <p/>
      * When method returns {@code null} then {@link #workspaceNotFoundHandler(ServletRequest, ServletResponse, FilterChain)}
      * will be invoked with default behaviour, if default behaviour is not appropriate - override handler method as well
@@ -83,7 +83,7 @@ public abstract class WorkspaceEnvironmentInitializationFilter implements Filter
      *         current filter request
      * @return workspace descriptor or {@code null}
      */
-    protected abstract UsersWorkspace getWorkspaceFromRequest(ServletRequest request);
+    protected abstract Workspace getWorkspaceFromRequest(ServletRequest request);
 
     /**
      * Will be invoked when {@link #getWorkspaceFromRequest(ServletRequest)} returns {@code null}.

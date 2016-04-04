@@ -27,7 +27,6 @@
                              che-button-dropdown-controller="codenvyNavbarCtrl"
                              ng-if="codenvyNavbarCtrl.isUser()"></che-button-dropdown>
       </section>
-      <section layout="column" layout-align="center center">&nbsp;</section>
       <md-divider md-theme="factory-theme"></md-divider>
 
       <div class="admin-navbar-menu">
@@ -184,7 +183,12 @@
       </div>
       <md-divider md-theme="factory-theme" ng-show="codenvyNavbarCtrl.isUser()"></md-divider>
       <section class="left-sidebar-menu" layout="column" layout-align="center center">
-        <md-list layout="row">
+        <md-list layout="row" layout-align="start center">
+          <md-button ng-href="https://codenvy.com/"
+                     class="codenvy-navbar-button"
+                     tooltip="Go to Codenvy Classic"
+                     layout-align="center">Codenvy Classic
+          </md-button>
           <md-list-item>
             <logout-widget></logout-widget>
           </md-list-item>

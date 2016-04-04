@@ -23,7 +23,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.eclipse.che.api.machine.server.impl.SnapshotImpl;
-import org.eclipse.che.api.workspace.server.model.impl.UsersWorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.stack.StackImpl;
 import org.eclipse.che.inject.DynaModule;
 
@@ -48,8 +48,8 @@ public class MongoCodecModule extends AbstractModule {
         binder.addBinding().toInstance(new CodecProvider() {
             @Override
             public <T> Codec<T> get(Class<T> clazz, CodecRegistry registry) {
-                if (clazz == UsersWorkspaceImpl.class) {
-                    return (Codec<T>)new UsersWorkspaceImplCodec(registry);
+                if (clazz == WorkspaceImpl.class) {
+                    return (Codec<T>)new WorkspaceImplCodec(registry);
                 } else if (clazz == SnapshotImpl.class) {
                     return (Codec<T>)new SnapshotImplCodec(registry);
                 } else if (clazz == UsersSshPair.class) {

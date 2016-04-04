@@ -29,7 +29,7 @@ import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.api.promises.client.js.JsPromiseError;
 import org.eclipse.che.api.promises.client.js.Promises;
-import org.eclipse.che.api.workspace.shared.dto.UsersWorkspaceDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.app.CurrentUser;
 import org.eclipse.che.ide.dto.DtoFactory;
@@ -326,7 +326,7 @@ public class MicrosoftHostingService implements VcsHostingService {
 
     @Override
     public Promise<HostUser> authenticate(CurrentUser user) {
-        final UsersWorkspaceDto workspace = this.appContext.getWorkspace();
+        final WorkspaceDto workspace = this.appContext.getWorkspace();
         if (workspace == null) {
             return Promises.reject(JsPromiseError.create("Error accessing current workspace"));
         }

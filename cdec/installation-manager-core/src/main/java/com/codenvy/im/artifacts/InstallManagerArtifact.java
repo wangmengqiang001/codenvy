@@ -52,7 +52,7 @@ public class InstallManagerArtifact extends AbstractArtifact {
     public static final String NAME = "installation-manager-cli";
 
     private static final String CODENVY_CLI_DIR_NAME   = "codenvy-cli";
-    private static final String UPDATE_CLI_SCRIPT_NAME = "codenvy-cli-update-script.sh";
+    private static final String UPDATE_CLI_SCRIPT_NAME = "update-im-cli";
     private static final String IM_ROOT_DIRECTORY_NAME = "codenvy-im";
     private static final String RELATIVE_PATH_TO_JAVA  = IM_ROOT_DIRECTORY_NAME + "/jre";
 
@@ -130,8 +130,9 @@ public class InstallManagerArtifact extends AbstractArtifact {
 
 
                 final String contentOfUpdateCliScript = format("#!/bin/bash \n" +
-                                                               "rm -rf %1$s/* \n" +          // remove content of cli client dir
-                                                               "tar -xzf %2$s -C %1$s \n" +  // unpack update into the cli client dir
+                                                               "rm -rf %1$s/bin/* \n" +          // remove content of "bin" dir of cli client
+                                                               "find %1$s/* ! -name 'bin' -type d -exec rm -rf {} + \n" +  // remove all content of cli client except "bin" dir
+                                                               "tar -xzf %2$s -C %1$s/ \n" +  // unpack update into the cli client dir
                                                                "chmod +x %1$s/bin/* \n" +    // set permissions to execute CLI client scripts
                                                                "sed -i \"2iJAVA_HOME=%3$s\" %1$s/bin/codenvy \n" +
                                                                // setup java home path
@@ -144,15 +145,15 @@ public class InstallManagerArtifact extends AbstractArtifact {
                                                                updateCliScript.toAbsolutePath());
 
                 return new MacroCommand(ImmutableList.<Command>of(
-                        new SimpleCommand(format("sudo sh -c \" echo '%s' > %s\"", contentOfUpdateCliScript, updateCliScript.toAbsolutePath()),
-                                          syncAgent, "Create script to update cli client"),
+                    new SimpleCommand(format("sh -c \" echo '%s' > %s\"", contentOfUpdateCliScript, updateCliScript.toAbsolutePath()),
+                                      syncAgent, "Create script to update cli client"),
 
-                        new SimpleCommand(format("sudo chmod 775 %s", updateCliScript.toAbsolutePath()),
-                                          syncAgent, "Set permissions to execute update script"),
+                    new SimpleCommand(format("chmod 775 %s", updateCliScript.toAbsolutePath()),
+                                      syncAgent, "Set permissions to execute update script"),
 
-                        new SimpleCommand(format("sudo cp %s %s", pathToBinaries.toAbsolutePath(), newPlacementOfUpdateBinaries),
-                                          syncAgent, "Copy update binaries to the user home directory")),
-                                          "Update installation manager CLI client");
+                    new SimpleCommand(format("cp %s %s", pathToBinaries.toAbsolutePath(), newPlacementOfUpdateBinaries),
+                                      syncAgent, "Copy update binaries to the user home directory")),
+                                        "Update installation manager CLI client");
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of range", step));

@@ -28,21 +28,21 @@ import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.api.promises.client.js.JsPromiseError;
 import org.eclipse.che.api.promises.client.js.Promises;
-import org.eclipse.che.api.workspace.shared.dto.UsersWorkspaceDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.app.CurrentUser;
 import org.eclipse.che.ide.dto.DtoFactory;
-import org.eclipse.che.ide.ext.github.client.GitHubClientService;
-import org.eclipse.che.ide.ext.github.shared.GitHubPullRequest;
-import org.eclipse.che.ide.ext.github.shared.GitHubPullRequestCreationInput;
-import org.eclipse.che.ide.ext.github.shared.GitHubPullRequestList;
-import org.eclipse.che.ide.ext.github.shared.GitHubRepository;
-import org.eclipse.che.ide.ext.github.shared.GitHubRepositoryList;
-import org.eclipse.che.ide.ext.github.shared.GitHubUser;
 import org.eclipse.che.ide.rest.AsyncRequestCallback;
 import org.eclipse.che.ide.rest.DtoUnmarshallerFactory;
 import org.eclipse.che.ide.rest.RestContext;
 import org.eclipse.che.ide.rest.Unmarshallable;
+import org.eclipse.che.plugin.github.ide.GitHubClientService;
+import org.eclipse.che.plugin.github.shared.GitHubPullRequest;
+import org.eclipse.che.plugin.github.shared.GitHubPullRequestCreationInput;
+import org.eclipse.che.plugin.github.shared.GitHubPullRequestList;
+import org.eclipse.che.plugin.github.shared.GitHubRepository;
+import org.eclipse.che.plugin.github.shared.GitHubRepositoryList;
+import org.eclipse.che.plugin.github.shared.GitHubUser;
 import org.eclipse.che.security.oauth.JsOAuthWindow;
 import org.eclipse.che.security.oauth.OAuthCallback;
 import org.eclipse.che.security.oauth.OAuthStatus;
@@ -572,7 +572,7 @@ public class GitHubHostingService implements VcsHostingService {
     }
 
     /**
-     * Converts an instance of {@link org.eclipse.che.ide.ext.github.shared.GitHubRepository} into a {@link
+     * Converts an instance of {@link GitHubRepository} into a {@link
      * com.codenvy.plugin.contribution.vcs.client.hosting.dto.Repository}.
      *
      * @param gitHubRepository
@@ -604,7 +604,7 @@ public class GitHubHostingService implements VcsHostingService {
     }
 
     /**
-     * Converts an instance of {@link org.eclipse.che.ide.ext.github.shared.GitHubPullRequest} into a {@link
+     * Converts an instance of {@link GitHubPullRequest} into a {@link
      * com.codenvy.plugin.contribution.vcs.client.hosting.dto.PullRequest}.
      *
      * @param gitHubPullRequest
@@ -629,7 +629,7 @@ public class GitHubHostingService implements VcsHostingService {
 
     @Override
     public void authenticate(@NotNull final CurrentUser currentUser, @NotNull final AsyncCallback<HostUser> callback) {
-        final UsersWorkspaceDto workspace = this.appContext.getWorkspace();
+        final WorkspaceDto workspace = this.appContext.getWorkspace();
         if (workspace == null) {
             callback.onFailure(new Exception("Error accessing current workspace"));
             return;
@@ -652,7 +652,7 @@ public class GitHubHostingService implements VcsHostingService {
 
     @Override
     public Promise<HostUser> authenticate(final CurrentUser user) {
-        final UsersWorkspaceDto workspace = this.appContext.getWorkspace();
+        final WorkspaceDto workspace = this.appContext.getWorkspace();
         if (workspace == null) {
             return Promises.reject(JsPromiseError.create("Error accessing current workspace"));
         }

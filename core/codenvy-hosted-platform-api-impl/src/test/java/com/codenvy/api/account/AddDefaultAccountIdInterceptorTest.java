@@ -24,6 +24,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -79,10 +80,9 @@ public class AddDefaultAccountIdInterceptorTest {
     @DataProvider(name = "workspaceServiceMethods")
     private Object[][] serviceMethodsProvider() {
         return new Object[][] {
-                {new Object[] {"create", WorkspaceConfigDto.class, String.class}},
+                {new Object[] {"create", WorkspaceConfigDto.class, List.class, String.class}},
                 {new Object[] {"startById", String.class, String.class, String.class}},
-                {new Object[] {"startByName", String.class, String.class, String.class}},
-                {new Object[] {"startTemporary", WorkspaceConfigDto.class, String.class}},
+                {new Object[] {"startFromConfig", WorkspaceConfigDto.class, Boolean.class, String.class}},
                 {new Object[] {"recoverWorkspace", String.class, String.class, String.class}}
         };
     }

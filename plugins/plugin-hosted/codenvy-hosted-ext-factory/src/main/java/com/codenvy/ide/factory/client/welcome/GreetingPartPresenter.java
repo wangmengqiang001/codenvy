@@ -30,7 +30,7 @@ import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
-import org.eclipse.che.api.workspace.shared.dto.UsersWorkspaceDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.constraints.Constraints;
@@ -187,7 +187,7 @@ public class GreetingPartPresenter extends BasePresenter implements GreetingPart
             }
         }
 
-        UsersWorkspaceDto workspace = appContext.getWorkspace();
+        WorkspaceDto workspace = appContext.getWorkspace();
 
         // checking whether welcome is enabled for persistent workspace.
         if (!workspace.isTemporary()

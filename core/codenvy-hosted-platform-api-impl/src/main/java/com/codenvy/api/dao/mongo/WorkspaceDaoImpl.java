@@ -25,7 +25,7 @@ import org.bson.Document;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.workspace.server.model.impl.UsersWorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 
 import javax.inject.Inject;
@@ -48,6 +48,7 @@ import static java.util.Objects.requireNonNull;
  *
  * {
  *      "id" : "workspace123",
+ *      "namespace" : "user123",
  *      "config" : {
  *          "name" : "my-workspace",
  *          "description" : "This is workspace description",
@@ -81,21 +82,6 @@ import static java.util.Objects.requireNonNull;
  *                          }
  *                      ]
  *                  },
- *                  "modules": [
- *                      {
- *                          "name":"my-module",
- *                          "path":"/path/to/project/my-module",
- *                          "type":"maven",
- *                          "mixins" : [ "mixinType1", "mixinType2" ],
- *                          "description" : "This is module description",
- *                          "attributes" : [
- *                              {
- *                                  "name" : "module-attribute-1",
- *                                  "value" : [ "value1", "value2" ]
- *                              }
- *                          ]
- *                      }
- *                  ],
  *                  "mixins" : [ "mixinType1", "mixinType2" ],
  *                  "attributes" : [
  *                      {
@@ -123,32 +109,31 @@ import static java.util.Objects.requireNonNull;
  *                          "source" : {
  *                              "type" : "recipe",
  *                              "location" : "recipe-url"
- *                          }
+ *                          },
+ *                          "servers" : [
+ *                              {
+ *                                  "ref" : "some_reference",
+ *                                  "port" : "9090/udp",
+ *                                  "protocol" : "some_protocol",
+ *                                  "path" : "/some/path"
+ *                              }
+ *                          ],
+ *                          envVariables : [
+ *                              {
+ *                                  "name" : "var_name1",
+ *                                  "value" : "var_value1"
+ *                              }
+ *                          ]
  *                      }
  *                  ]
  *              }
  *          ],
- *          "attributes" : [
+ *      },
+ *      "attributes" : [
  *              {
  *                  "name" : "attribute1",
  *                  "value" : "value1"
  *              }
- *          ]
- *      },
- *      "owner" : "user123",
- *      "servers" : [
- *          {
- *              "ref" : "some_reference",
- *              "port" : "9090/udp",
- *              "protocol" : "some_protocol",
- *              "path" : "/some/path"
- *          }
- *      ],
- *      envVariables : [
- *          {
- *              "name" : "var_name1",
- *              "value" : "var_value1"
- *          }
  *      ]
  * }
  * </pre>
@@ -180,26 +165,26 @@ import static java.util.Objects.requireNonNull;
 @Singleton
 public class WorkspaceDaoImpl implements WorkspaceDao {
 
-    private final MongoCollection<UsersWorkspaceImpl> collection;
+    private final MongoCollection<WorkspaceImpl> collection;
 
     @Inject
     public WorkspaceDaoImpl(@Named("mongo.db.organization") MongoDatabase database,
                             @Named("organization.storage.db.workspace2.collection") String collectionName) {
-        collection = database.getCollection(collectionName, UsersWorkspaceImpl.class);
-        collection.createIndex(new Document("config.name", 1).append("owner", 1), new IndexOptions().unique(true));
+        collection = database.getCollection(collectionName, WorkspaceImpl.class);
+        collection.createIndex(new Document("config.name", 1).append("namespace", 1), new IndexOptions().unique(true));
     }
 
     @Override
-    public UsersWorkspaceImpl create(UsersWorkspaceImpl workspace) throws ConflictException, ServerException {
+    public WorkspaceImpl create(WorkspaceImpl workspace) throws ConflictException, ServerException {
         requireNonNull(workspace, "Workspace must not be null");
         requireNonNull(workspace.getConfig(), "Workspace config must not be null");
         try {
             collection.insertOne(workspace);
         } catch (MongoWriteException writeEx) {
-            handleWriteConflict(writeEx, format("Workspace with id '%s' or combination of name '%s' & owner '%s' already exists",
+            handleWriteConflict(writeEx, format("Workspace with id '%s' or name '%s' in namespace '%s' already exists",
                                                 workspace.getId(),
                                                 workspace.getConfig().getName(),
-                                                workspace.getOwner()));
+                                                workspace.getNamespace()));
         } catch (MongoException mongoEx) {
             throw new ServerException(mongoEx.getMessage(), mongoEx);
         }
@@ -207,7 +192,7 @@ public class WorkspaceDaoImpl implements WorkspaceDao {
     }
 
     @Override
-    public UsersWorkspaceImpl update(UsersWorkspaceImpl update) throws NotFoundException, ConflictException, ServerException {
+    public WorkspaceImpl update(WorkspaceImpl update) throws NotFoundException, ConflictException, ServerException {
         requireNonNull(update, "Workspace update must not be null");
         requireNonNull(update.getConfig(), "Workspace update config must not be null");
         try {
@@ -215,10 +200,10 @@ public class WorkspaceDaoImpl implements WorkspaceDao {
                 throw new NotFoundException("Workspace with id '" + update.getId() + "' was not found");
             }
         } catch (MongoWriteException writeEx) {
-            handleWriteConflict(writeEx, format("Workspace with id '%s' or combination of name '%s' & owner '%s' already exists",
+            handleWriteConflict(writeEx, format("Workspace with id '%s' or name '%s' in namespace '%s' already exists",
                                                 update.getId(),
                                                 update.getConfig().getName(),
-                                                update.getOwner()));
+                                                update.getNamespace()));
         } catch (MongoException mongoEx) {
             throw new ServerException(mongoEx.getMessage(), mongoEx);
         }
@@ -233,10 +218,10 @@ public class WorkspaceDaoImpl implements WorkspaceDao {
     }
 
     @Override
-    public UsersWorkspaceImpl get(String id) throws NotFoundException, ServerException {
+    public WorkspaceImpl get(String id) throws NotFoundException, ServerException {
         requireNonNull(id, "Workspace identifier must not be null");
 
-        final FindIterable<UsersWorkspaceImpl> findIt = collection.find(eq("_id", id));
+        final FindIterable<WorkspaceImpl> findIt = collection.find(eq("_id", id));
         if (findIt.first() == null) {
             throw new NotFoundException("Workspace with id '" + id + "' was not found");
         }
@@ -244,22 +229,22 @@ public class WorkspaceDaoImpl implements WorkspaceDao {
     }
 
     @Override
-    public UsersWorkspaceImpl get(String name, String owner) throws NotFoundException, ServerException {
+    public WorkspaceImpl get(String name, String namespace) throws NotFoundException, ServerException {
         requireNonNull(name, "Workspace name must not be null");
-        requireNonNull(owner, "Workspace owner must not be null");
+        requireNonNull(namespace, "Workspace namespace must not be null");
 
-        final FindIterable<UsersWorkspaceImpl> findIt = collection.find(and(eq("config.name", name), eq("owner", owner)));
+        final FindIterable<WorkspaceImpl> findIt = collection.find(and(eq("config.name", name), eq("namespace", namespace)));
         if (findIt.first() == null) {
-            throw new NotFoundException(format("Workspace with name '%s' and owner '%s' was not found", name, owner));
+            throw new NotFoundException(format("Workspace with name '%s' in namespace '%s' was not found", name, namespace));
         }
         return findIt.first();
     }
 
     @Override
-    public List<UsersWorkspaceImpl> getByOwner(String owner) throws ServerException {
-        requireNonNull(owner, "Workspace owner must not be null");
+    public List<WorkspaceImpl> getByNamespace(String namespace) throws ServerException {
+        requireNonNull(namespace, "Workspace namespace must not be null");
 
-        return collection.find(eq("owner", owner)).into(new ArrayList<>());
+        return collection.find(eq("namespace", namespace)).into(new ArrayList<>());
     }
 
 }

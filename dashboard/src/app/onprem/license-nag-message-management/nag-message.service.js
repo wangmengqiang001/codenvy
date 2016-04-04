@@ -40,7 +40,7 @@ export class NagMessageService {
       return;
     }
     // create nag message element
-    let jqItem = angular.element('<cdvy-nag-message></cdvy-nag-message>');
+    let jqItem = angular.element('<cdvy-nag-message ng-hide="showIDE"></cdvy-nag-message>');
     jqItem.attr('id', this.nagMessageId);
     // compile
     this.nagMessageElement = this.$compile(jqItem)(angular.element(this.$document.find('body')[0]).scope());

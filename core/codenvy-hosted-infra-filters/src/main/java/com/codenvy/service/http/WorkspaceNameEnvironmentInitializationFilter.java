@@ -16,8 +16,8 @@ package com.codenvy.service.http;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.workspace.UsersWorkspace;
 
+import org.eclipse.che.api.core.model.workspace.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +45,7 @@ public class WorkspaceNameEnvironmentInitializationFilter extends WorkspaceEnvir
 
 
     @Override
-    protected UsersWorkspace getWorkspaceFromRequest(ServletRequest request) {
+    protected Workspace getWorkspaceFromRequest(ServletRequest request) {
         HttpServletRequest httpRequest = (HttpServletRequest)request;
         String requestUrl = httpRequest.getRequestURI();
         String[] pathParts = requestUrl.split("/", 5);

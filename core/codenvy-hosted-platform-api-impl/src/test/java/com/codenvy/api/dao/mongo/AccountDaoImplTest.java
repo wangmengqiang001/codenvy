@@ -26,7 +26,7 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
-import org.eclipse.che.api.workspace.server.model.impl.UsersWorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
@@ -149,7 +149,7 @@ public class AccountDaoImplTest extends BaseDaoTest {
         insertAccounts(account);
         //prepare update
         account.setName(account.getName() + "new_name_suffix");
-        UsersWorkspaceImpl workspace2 = mock(UsersWorkspaceImpl.class);
+        WorkspaceImpl workspace2 = mock(WorkspaceImpl.class);
         when(workspace2.getId()).thenReturn("workspace345");
         when(workspaceDao.get(workspace2.getId())).thenReturn(workspace2);
         account.getWorkspaces().add(workspace2);
@@ -311,7 +311,7 @@ public class AccountDaoImplTest extends BaseDaoTest {
         attributes.put("attr1", "value1");
         attributes.put("attr2", "value2");
         attributes.put("attr3", "value3");
-        UsersWorkspaceImpl workspace = mock(UsersWorkspaceImpl.class);
+        WorkspaceImpl workspace = mock(WorkspaceImpl.class);
         when(workspace.getId()).thenReturn("workspace123");
         when(workspaceDao.get("workspace123")).thenReturn(workspace);
         return new Account("test_account_id", "test_account_name", new ArrayList<>(singletonList(workspace)), attributes);

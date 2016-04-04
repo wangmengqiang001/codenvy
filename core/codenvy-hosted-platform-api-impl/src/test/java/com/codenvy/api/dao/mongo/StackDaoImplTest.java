@@ -332,10 +332,6 @@ public class StackDaoImplTest extends BaseDaoTest {
         assertEquals(worspaceDocument.getString("description"), workspace.getDescription(), "Workspace description");
         assertEquals(worspaceDocument.getString("defaultEnv"), workspace.getDefaultEnv(), "Workspace defaultEnvName");
 
-        // check attributes
-        final List<Document> attributes = (List<Document>)worspaceDocument.get("attributes");
-        assertEquals(attributes, mapAsDocumentsList(workspace.getAttributes()), "Workspace attributes");
-
         // check commands
         final List<Document> commands = (List<Document>)worspaceDocument.get("commands");
         assertEquals(commands.size(), workspace.getCommands().size(), "Workspace commands size");
@@ -570,7 +566,6 @@ public class StackDaoImplTest extends BaseDaoTest {
         return WorkspaceConfigImpl.builder()
                                   .setName("workspace-name")
                                   .setDescription("This is test workspace")
-                                  .setAttributes(attributes)
                                   .setCommands(commands)
                                   .setProjects(projects)
                                   .setEnvironments(environments)

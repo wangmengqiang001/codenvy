@@ -37,7 +37,7 @@ import org.eclipse.che.api.machine.server.recipe.RecipeImpl;
 import org.eclipse.che.api.workspace.server.model.impl.EnvironmentImpl;
 import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.SourceStorageImpl;
-import org.eclipse.che.api.workspace.server.model.impl.UsersWorkspaceImpl;
+import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
@@ -79,8 +79,8 @@ import static org.testng.Assert.assertTrue;
 @Listeners(value = {MockitoTestNGListener.class})
 public class WorkspaceDaoImplTest {
 
-    private MongoCollection<UsersWorkspaceImpl> collection;
-    private WorkspaceDaoImpl                    workspaceDao;
+    private MongoCollection<WorkspaceImpl> collection;
+    private WorkspaceDaoImpl               workspaceDao;
 
     @BeforeMethod
     public void setUpDb() {
@@ -88,18 +88,18 @@ public class WorkspaceDaoImplTest {
         final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
         final MongoDatabase database = fongo.getDatabase("workspaces")
                                             .withCodecRegistry(fromRegistries(defaultRegistry,
-                                                                              fromCodecs(new UsersWorkspaceImplCodec(defaultRegistry))));
-        collection = database.getCollection("workspaces", UsersWorkspaceImpl.class);
+                                                                              fromCodecs(new WorkspaceImplCodec(defaultRegistry))));
+        collection = database.getCollection("workspaces", WorkspaceImpl.class);
         workspaceDao = new WorkspaceDaoImpl(database, "workspaces");
     }
 
     @Test
     public void testCreateWorkspace() throws Exception {
-        final UsersWorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
 
         workspaceDao.create(workspace);
 
-        final UsersWorkspaceImpl result = collection.find(Filters.eq("_id", workspace.getId())).first();
+        final WorkspaceImpl result = collection.find(Filters.eq("_id", workspace.getId())).first();
         assertEquals(result, workspace);
     }
 
@@ -110,7 +110,7 @@ public class WorkspaceDaoImplTest {
     }
 
     @Test(expectedExceptions = ConflictException.class,
-          expectedExceptionsMessageRegExp = "Workspace with id '.*' or combination of name '.*' & owner '.*' already exists")
+          expectedExceptionsMessageRegExp = "Workspace with id '.*' or name '.*' in namespace '.*' already exists")
     public void testCreateWorkspaceWhenWorkspaceWithSuchIdAlreadyExists() throws Exception {
         // fongo throws DuplicateKeyException in the case of duplicate key
         // but mongo 3.x driver throws MongoWriteException in this case
@@ -121,7 +121,7 @@ public class WorkspaceDaoImplTest {
     }
 
     @Test(expectedExceptions = ConflictException.class,
-          expectedExceptionsMessageRegExp = "Workspace with id '.*' or combination of name '.*' & owner '.*' already exists")
+          expectedExceptionsMessageRegExp = "Workspace with id '.*' or name '.*' in namespace '.*' already exists")
     public void testCreateWorkspaceWhenWorkspaceWithSuchNameAndOwnerAlreadyExists() throws Exception {
         // fongo throws DuplicateKeyException in the case of duplicate key
         // but mongo 3.x driver throws MongoWriteException in this case
@@ -140,14 +140,14 @@ public class WorkspaceDaoImplTest {
 
     @Test
     public void testUpdateWorkspace() throws Exception {
-        final UsersWorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
         collection.insertOne(workspace);
         workspace.getConfig().setName("new-workspace-name");
         workspace.getConfig().setDescription("new-workspace-description");
 
         workspaceDao.update(workspace);
 
-        final UsersWorkspaceImpl result = collection.find(Filters.eq("_id", workspace.getId())).first();
+        final WorkspaceImpl result = collection.find(Filters.eq("_id", workspace.getId())).first();
         assertEquals(result, workspace);
     }
 
@@ -172,7 +172,7 @@ public class WorkspaceDaoImplTest {
 
     @Test
     public void testRemoveWorkspace() throws Exception {
-        final UsersWorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
         collection.insertOne(workspace);
         assertEquals(collection.count(Filters.eq("_id", workspace.getId())), 1);
 
@@ -188,10 +188,10 @@ public class WorkspaceDaoImplTest {
 
     @Test
     public void testGetWorkspaceById() throws Exception {
-        final UsersWorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
         collection.insertOne(workspace);
 
-        final UsersWorkspaceImpl result = workspaceDao.get(workspace.getId());
+        final WorkspaceImpl result = workspaceDao.get(workspace.getId());
 
         assertEquals(result, workspace);
     }
@@ -208,10 +208,10 @@ public class WorkspaceDaoImplTest {
 
     @Test
     public void testGetWorkspaceByNameAndOwner() throws Exception {
-        final UsersWorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
         collection.insertOne(workspace);
 
-        final UsersWorkspaceImpl result = workspaceDao.get(workspace.getConfig().getName(), workspace.getOwner());
+        final WorkspaceImpl result = workspaceDao.get(workspace.getConfig().getName(), workspace.getNamespace());
 
         assertEquals(result, workspace);
     }
@@ -226,35 +226,35 @@ public class WorkspaceDaoImplTest {
         workspaceDao.get(null, "workspace-owner");
     }
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Workspace owner must not be null")
+    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Workspace namespace must not be null")
     public void testGetWorkspaceByNameAndOwnerWithNullOwner() throws Exception {
         workspaceDao.get("workspace name", null);
     }
 
     @Test
     public void testGetWorkspacesByOwner() throws Exception {
-        final UsersWorkspaceImpl workspace = createWorkspace();
-        final UsersWorkspaceImpl workspace2 = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace2 = createWorkspace();
         workspace2.getConfig().setName(workspace.getConfig().getName() + '2');
-        final UsersWorkspaceImpl workspace3 = new UsersWorkspaceImpl(workspace.getConfig(),
-                                                                     generate("ws", 16),
-                                                                     workspace.getOwner() + '2');
+        final WorkspaceImpl workspace3 = new WorkspaceImpl(generate("ws", 16),
+                                                           workspace.getNamespace() + '2',
+                                                           workspace.getConfig());
         workspace3.getConfig().setName(workspace.getConfig().getName() + '3');
         collection.insertMany(asList(workspace, workspace2, workspace3));
 
-        final List<UsersWorkspaceImpl> result = workspaceDao.getByOwner(workspace.getOwner());
+        final List<WorkspaceImpl> result = workspaceDao.getByNamespace(workspace.getNamespace());
 
         assertEquals(new HashSet<>(result), new HashSet<>(asList(workspace, workspace2)));
     }
 
     @Test
     public void testGetWorkspacesByOwnerWhenUserDoesNotOwnAnyWorkspace() throws Exception {
-        assertTrue(workspaceDao.getByOwner("test-user").isEmpty());
+        assertTrue(workspaceDao.getByNamespace("test-user").isEmpty());
     }
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Workspace owner must not be null")
+    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "Workspace namespace must not be null")
     public void testGetWorkspacesByOwnerWhenOwnerIsNull() throws Exception {
-        workspaceDao.getByOwner(null);
+        workspaceDao.getByNamespace(null);
     }
 
     @Test
@@ -263,7 +263,7 @@ public class WorkspaceDaoImplTest {
         // mocking DocumentCodec
         final DocumentCodec documentCodec = mock(DocumentCodec.class);
         when(documentCodec.getEncoderClass()).thenReturn(Document.class);
-        final UsersWorkspaceImplCodec codec = new UsersWorkspaceImplCodec(CodecRegistries.fromCodecs(documentCodec));
+        final WorkspaceImplCodec codec = new WorkspaceImplCodec(CodecRegistries.fromCodecs(documentCodec));
 
         // get encoded document instance
         final Document[] documentHolder = new Document[1];
@@ -275,7 +275,7 @@ public class WorkspaceDaoImplTest {
         }).when(documentCodec).encode(any(), any(), any());
 
         // prepare test workspace
-        final UsersWorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
 
         // encode workspace
         codec.encode(null, workspace, null);
@@ -283,15 +283,15 @@ public class WorkspaceDaoImplTest {
         // check encoding result
         final Document result = documentHolder[0];
         assertEquals(result.getString("_id"), workspace.getId(), "Workspace id");
-        assertEquals(result.getString("owner"), workspace.getOwner(), "Workspace owner");
+        assertEquals(result.getString("namespace"), workspace.getNamespace(), "Workspace owner");
         final Document wsConfig = (Document)result.get("config");
         assertEquals(wsConfig.getString("name"), workspace.getConfig().getName(), "Workspace name");
         assertEquals(wsConfig.getString("description"), workspace.getConfig().getDescription(), "Workspace description");
         assertEquals(wsConfig.getString("defaultEnv"), workspace.getConfig().getDefaultEnv(), "Workspace defaultEnv");
 
         // check attributes
-        final List<Document> attributes = (List<Document>)wsConfig.get("attributes");
-        assertEquals(attributes, mapAsDocumentsList(workspace.getConfig().getAttributes()), "Workspace attributes");
+        final List<Document> attributes = (List<Document>)result.get("attributes");
+        assertEquals(attributes, mapAsDocumentsList(workspace.getAttributes()), "Workspace attributes");
 
         // check commands
         final List<Document> commands = (List<Document>)wsConfig.get("commands");
@@ -407,11 +407,11 @@ public class WorkspaceDaoImplTest {
      * <p/>
      * <p>Simplified test case:
      * <pre>
-     *     UsersWorkspaceImpl ws = ...
+     *     WorkspaceImpl ws = ...
      *
      *     Document encodedWs = codec.encode(ws)
      *
-     *     UsersWorkspaceImpl result = codec.decode(encodedWs)
+     *     WorkspaceImpl result = codec.decode(encodedWs)
      *
      *     assert ws.equals(result)
      * </pre>
@@ -423,7 +423,7 @@ public class WorkspaceDaoImplTest {
         // mocking DocumentCodec
         final DocumentCodec documentCodec = mock(DocumentCodec.class);
         when(documentCodec.getEncoderClass()).thenReturn(Document.class);
-        final UsersWorkspaceImplCodec codec = new UsersWorkspaceImplCodec(CodecRegistries.fromCodecs(documentCodec));
+        final WorkspaceImplCodec codec = new WorkspaceImplCodec(CodecRegistries.fromCodecs(documentCodec));
 
         // get encoded document instance
         final Document[] documentHolder = new Document[1];
@@ -435,7 +435,7 @@ public class WorkspaceDaoImplTest {
         }).when(documentCodec).encode(any(), any(), any());
 
         // prepare test workspace
-        final UsersWorkspaceImpl workspace = createWorkspace();
+        final WorkspaceImpl workspace = createWorkspace();
 
         // encode workspace
         codec.encode(null, workspace, null);
@@ -443,12 +443,12 @@ public class WorkspaceDaoImplTest {
         // mocking document codec to return encoded workspace
         when(documentCodec.decode(any(), any())).thenReturn(documentHolder[0]);
 
-        final UsersWorkspaceImpl result = codec.decode(null, null);
+        final WorkspaceImpl result = codec.decode(null, null);
 
         assertEquals(result, workspace);
     }
 
-    private static UsersWorkspaceImpl createWorkspace() {
+    private static WorkspaceImpl createWorkspace() {
         // environments
         final RecipeImpl recipe = new RecipeImpl();
         recipe.setType("dockerfile");
@@ -523,28 +523,28 @@ public class WorkspaceDaoImplTest {
         attributes.put("test.attribute2", "test-value2");
         attributes.put("test.attribute3", "test-value3");
 
-        return UsersWorkspaceImpl.builder()
-                                 .setId(generate("workspace", 16))
-                                 .setConfig(WorkspaceConfigImpl.builder()
-                                                               .setName("workspace-name")
-                                                               .setDescription("This is test workspace")
-                                                               .setAttributes(attributes)
-                                                               .setCommands(commands)
-                                                               .setProjects(projects)
-                                                               .setEnvironments(environments)
-                                                               .setDefaultEnv(env1.getName())
-                                                               .build())
-                                 .setOwner("user123")
-                                 .build();
+        return WorkspaceImpl.builder()
+                            .setId(generate("workspace", 16))
+                            .setConfig(WorkspaceConfigImpl.builder()
+                                                          .setName("workspace-name")
+                                                          .setDescription("This is test workspace")
+                                                          .setCommands(commands)
+                                                          .setProjects(projects)
+                                                          .setEnvironments(environments)
+                                                          .setDefaultEnv(env1.getName())
+                                                          .build())
+                            .setAttributes(attributes)
+                            .setNamespace("user123")
+                            .build();
     }
 
-    private MongoDatabase mockDatabase(Consumer<MongoCollection<UsersWorkspaceImpl>> consumer) {
+    private MongoDatabase mockDatabase(Consumer<MongoCollection<WorkspaceImpl>> consumer) {
         @SuppressWarnings("unchecked")
-        final MongoCollection<UsersWorkspaceImpl> collection = mock(MongoCollection.class);
+        final MongoCollection<WorkspaceImpl> collection = mock(MongoCollection.class);
         consumer.accept(collection);
 
         final MongoDatabase database = mock(MongoDatabase.class);
-        when(database.getCollection("workspaces", UsersWorkspaceImpl.class)).thenReturn(collection);
+        when(database.getCollection("workspaces", WorkspaceImpl.class)).thenReturn(collection);
 
         return database;
     }

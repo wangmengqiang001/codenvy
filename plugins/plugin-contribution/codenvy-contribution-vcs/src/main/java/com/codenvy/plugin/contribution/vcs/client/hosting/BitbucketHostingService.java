@@ -29,7 +29,7 @@ import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.api.promises.client.js.JsPromiseError;
 import org.eclipse.che.api.promises.client.js.Promises;
-import org.eclipse.che.api.workspace.shared.dto.UsersWorkspaceDto;
+import org.eclipse.che.api.workspace.shared.dto.WorkspaceDto;
 import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.app.CurrentUser;
 import org.eclipse.che.ide.commons.exception.ServerException;
@@ -594,7 +594,7 @@ public class BitbucketHostingService implements VcsHostingService {
 
     @Override
     public void authenticate(@NotNull final CurrentUser user, @NotNull final AsyncCallback<HostUser> callback) {
-        final UsersWorkspaceDto workspace = this.appContext.getWorkspace();
+        final WorkspaceDto workspace = this.appContext.getWorkspace();
         if (workspace == null) {
             callback.onFailure(new Exception("Error accessing current workspace"));
             return;
@@ -617,7 +617,7 @@ public class BitbucketHostingService implements VcsHostingService {
 
     @Override
     public Promise<HostUser> authenticate(final CurrentUser user) {
-        final UsersWorkspaceDto workspace = this.appContext.getWorkspace();
+        final WorkspaceDto workspace = this.appContext.getWorkspace();
         if (workspace == null) {
             return Promises.reject(JsPromiseError.create("Error accessing current workspace"));
         }
