@@ -35,7 +35,6 @@ import javax.ws.rs.core.MediaType;
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
-
 @Path("/machine/token")
 public class MachineTokenService {
 

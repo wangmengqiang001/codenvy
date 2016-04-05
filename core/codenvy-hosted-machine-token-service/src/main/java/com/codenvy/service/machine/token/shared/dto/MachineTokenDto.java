@@ -20,7 +20,6 @@ import org.eclipse.che.dto.shared.DTO;
  * Machine token DTO.
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
- *
  */
 @DTO
 public interface MachineTokenDto {
