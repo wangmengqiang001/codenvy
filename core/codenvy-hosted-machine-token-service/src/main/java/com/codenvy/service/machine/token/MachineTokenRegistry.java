@@ -27,7 +27,7 @@ import static org.eclipse.che.commons.lang.NameGenerator.generate;
 /**
  *
  * Table-based storage of machine security tokens.
- * Table rows is workspace Id's, columns - user Id's.
+ * Table rows is workspace id's, columns - user id's.
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
@@ -57,12 +57,12 @@ public class MachineTokenRegistry {
      *        id of workspace to get token
      * @return machine security token
      * @throws NotFoundException
-     *         when no token exists for given user and/or workspace
+     *         when no token exists for given user and workspace
      */
     public String getToken(String userId, String workspaceId) throws NotFoundException {
         final String token = tokens.get(workspaceId, userId);
         if (token == null) {
-            throw new NotFoundException(format("Token not found for user %s and/or workspace %s", userId, workspaceId));
+            throw new NotFoundException(format("Token not found for user %s and workspace %s", userId, workspaceId));
         }
         return token;
     }

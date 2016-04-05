@@ -25,7 +25,7 @@ import javax.inject.Singleton;
 
 /**
  * Intercepts calls to workspace start/stop methods and
- * creates machine authorization token in the registry.
+ * creates or removes machine authorization token in the registry.
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
