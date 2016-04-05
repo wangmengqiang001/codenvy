@@ -21,13 +21,17 @@ import org.eclipse.che.api.core.NotFoundException;
 
 import javax.inject.Singleton;
 
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import static java.lang.String.format;
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
 
 /**
- *
  * Table-based storage of machine security tokens.
  * Table rows is workspace id's, columns - user id's.
+ * Table is synchronized externally as required by its javadoc.
+ * @see {HashBasedTable}
  *
  * @author Max Shaposhnik (mshaposhnik@codenvy.com)
  */
@@ -35,6 +39,7 @@ import static org.eclipse.che.commons.lang.NameGenerator.generate;
 public class MachineTokenRegistry {
 
     private final Table<String, String, String> tokens = HashBasedTable.create();
+    private final ReadWriteLock                 lock   = new ReentrantReadWriteLock();
 
     /**
      * Generates new machine security token for given user and workspace.
@@ -45,7 +50,12 @@ public class MachineTokenRegistry {
      *        id of workspace to generate token for
      */
     public void generateToken(String userId, String workspaceId) {
-        tokens.put(workspaceId, userId, generate("", 64));
+        lock.writeLock().lock();
+        try {
+            tokens.put(workspaceId, userId, generate("", 64));
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     /**
@@ -60,19 +70,30 @@ public class MachineTokenRegistry {
      *         when no token exists for given user and workspace
      */
     public String getToken(String userId, String workspaceId) throws NotFoundException {
-        final String token = tokens.get(workspaceId, userId);
-        if (token == null) {
-            throw new NotFoundException(format("Token not found for user %s and workspace %s", userId, workspaceId));
+        lock.readLock().lock();
+        try {
+            final String token = tokens.get(workspaceId, userId);
+            if (token == null) {
+                throw new NotFoundException(format("Token not found for user %s and workspace %s", userId, workspaceId));
+            }
+            return token;
+        } finally {
+            lock.readLock().unlock();
         }
-        return token;
     }
 
     /**
      * Invalidates machine security tokens for all users of given workspace.
+     *
      * @param workspaceId
-     *        workspace to invalidate tokens
+     *         workspace to invalidate tokens
      */
     public void removeTokens(String workspaceId) {
-        tokens.row(workspaceId).clear();
+        lock.writeLock().lock();
+        try {
+            tokens.row(workspaceId).clear();
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 }

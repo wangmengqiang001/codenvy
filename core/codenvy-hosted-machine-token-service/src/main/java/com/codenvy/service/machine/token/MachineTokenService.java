@@ -17,7 +17,6 @@ package com.codenvy.service.machine.token;
 import com.codenvy.service.machine.token.shared.dto.MachineTokenDto;
 
 import org.eclipse.che.api.core.NotFoundException;
-import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.env.EnvironmentContext;
 
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
@@ -50,7 +49,6 @@ public class MachineTokenService {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @GenerateLink(rel = "get machine token for user")
     public MachineTokenDto getMachineToken(@PathParam("id") String id) throws NotFoundException {
         final String userId = EnvironmentContext.getCurrent().getUser().getId();
         return newDto(MachineTokenDto.class).withUserId(userId)
