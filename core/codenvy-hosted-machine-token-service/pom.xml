@@ -159,7 +159,7 @@
                                 <package>com.codenvy.service.machine.token.shared.dto</package>
                             </dtoPackages>
                             <outputDirectory>${dto-generator-out-directory}</outputDirectory>
-                            <genClassName>com.codenvy.service.machine.token.shared.dto.server.DtoServerImpls</genClassName>
+                            <genClassName>com.codenvy.service.machine.token.server.dto.DtoServerImpls</genClassName>
                             <impl>server</impl>
                         </configuration>
                     </execution>
