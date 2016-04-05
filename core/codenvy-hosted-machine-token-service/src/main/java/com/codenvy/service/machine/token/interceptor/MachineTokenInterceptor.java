@@ -40,13 +40,13 @@ public class MachineTokenInterceptor implements MethodInterceptor {
         Object result = invocation.proceed();
 
         if (invocation.getMethod().getName().equals("stopWorkspace")) {
-            String workspaceId = (String)invocation.getArguments()[0];
+            final String workspaceId = (String)invocation.getArguments()[0];
             tokenRegistry.removeTokens(workspaceId);
             return  result;
         }
 
         if (result instanceof Workspace) {
-            Workspace workspace = ((Workspace)result);
+            final Workspace workspace = ((Workspace)result);
             tokenRegistry.generateToken(workspace.getNamespace(), workspace.getId());
         }
         return result;

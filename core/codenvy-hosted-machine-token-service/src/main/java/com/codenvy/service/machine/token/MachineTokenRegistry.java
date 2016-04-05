@@ -34,7 +34,7 @@ import static org.eclipse.che.commons.lang.NameGenerator.generate;
 @Singleton
 public class MachineTokenRegistry {
 
-    private Table<String, String, String> tokens = HashBasedTable.create();
+    private final Table<String, String, String> tokens = HashBasedTable.create();
 
     /**
      * Generates new machine security token for given user and workspace.
