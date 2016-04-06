@@ -16,6 +16,8 @@ package com.codenvy.api.workspace.server;
 
 import com.codenvy.api.permission.server.PermissionsDomain;
 
+import org.eclipse.che.api.core.model.workspace.Workspace;
+
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

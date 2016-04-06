@@ -70,7 +70,7 @@ public class PermissionsService extends Service {
     @GET
     @Path("/{domain}")
     @Produces(APPLICATION_JSON)
-    public Set<String> getSupportedActions(@PathParam("domain") String domain) {
+    public Set<String> getSupportedActions(@PathParam("domain") String domain) throws ConflictException {
         return permissionManager.getDomainsActions(domain);
     }
 
@@ -82,7 +82,7 @@ public class PermissionsService extends Service {
      */
     @POST
     @Consumes(APPLICATION_JSON)
-    public void storePermissions(PermissionsDto permissionsDto) throws ServerException, BadRequestException {
+    public void storePermissions(PermissionsDto permissionsDto) throws ServerException, BadRequestException, ConflictException {
         checkArgument(permissionsDto != null, "Permissions descriptor required");
         checkArgument(!isNullOrEmpty(permissionsDto.getUser()), "User required");
         checkArgument(!isNullOrEmpty(permissionsDto.getDomain()), "Domain required");
@@ -106,7 +106,7 @@ public class PermissionsService extends Service {
     @Path("/{domain}/{instance}")
     @Produces(APPLICATION_JSON)
     public List<String> getUsersPermissions(@PathParam("domain") String domain,
-                                            @PathParam("instance") String instance) throws ServerException {
+                                            @PathParam("instance") String instance) throws ServerException, ConflictException {
         final Permissions permissions = permissionManager.get(EnvironmentContext.getCurrent().getUser().getId(), domain, instance);
         if (permissions != null) {
             return permissions.getActions();
@@ -125,7 +125,8 @@ public class PermissionsService extends Service {
     @GET
     @Path("/{domain}/{instance}/list")
     public List<PermissionsDto> getUsersPermissionsByInstance(@PathParam("domain") String domain,
-                                                              @PathParam("instance") String instance) throws ServerException {
+                                                              @PathParam("instance") String instance) throws ServerException,
+                                                                                                             ConflictException {
         return permissionManager.getByInstance(domain, instance)
                                 .stream()
                                 .map(permissions -> DtoFactory.newDto(PermissionsDto.class)

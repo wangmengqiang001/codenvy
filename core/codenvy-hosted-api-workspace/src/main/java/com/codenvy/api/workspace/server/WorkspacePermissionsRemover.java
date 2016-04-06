@@ -57,7 +57,7 @@ public class WorkspacePermissionsRemover implements EventSubscriber<WorkspaceRem
         final List<Permissions> permissions;
         try {
             permissions = permissionManager.getByInstance(WorkspaceDomain.DOMAIN_ID, event.getWorkspaceId());
-        } catch (ServerException e) {
+        } catch (ConflictException | ServerException e) {
             LOG.error("Can't get user's permissions of workspace '" + event.getWorkspaceId() + "'", e);
             return;
         }

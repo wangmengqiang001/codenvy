@@ -22,8 +22,8 @@ import org.eclipse.che.api.account.server.dao.AccountDao;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
-import org.eclipse.che.api.core.model.workspace.Workspace;
-import org.eclipse.che.api.workspace.server.spi.WorkspaceDao;
+import org.eclipse.che.api.user.server.UserManager;
+import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.user.User;
 import org.eclipse.che.everrest.CheMethodInvokerFilter;
@@ -42,19 +42,21 @@ import java.lang.reflect.Method;
 @Filter
 @Path("/workspace/{path:.*}")
 public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
-    private final WorkspaceDao workspaceDao;
-    private final AccountDao   accountDao;
+    private final AccountDao       accountDao;
+    private final WorkspaceManager workspaceManager;
+    private final UserManager      userManager;
 
     @Inject
-    public WorkspacePermissionsFilter(WorkspaceDao workspaceDao,
-                                      AccountDao accountDao) {
-        this.workspaceDao = workspaceDao;
+    public WorkspacePermissionsFilter(AccountDao accountDao,
+                                      WorkspaceManager workspaceManager,
+                                      UserManager userManager) {
         this.accountDao = accountDao;
+        this.workspaceManager = workspaceManager;
+        this.userManager = userManager;
     }
 
     @Override
     public void filter(GenericMethodResource genericMethodResource, Object[] arguments) throws ForbiddenException, ServerException {
-
         final Method method = genericMethodResource.getMethod();
         final String methodName = method.getName();
 
@@ -68,34 +70,17 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
                 workspaceId = ((String)arguments[0]);
                 action = WorkspaceActions.RUN;
                 break;
-            case "startByName": {
-                String workspaceName = ((String)arguments[0]);
+            case "getByKey": {
                 try {
-                    Workspace workspace = workspaceDao.get(workspaceName, currentUser.getId());
-                    workspaceId = workspace.getId();
-                } catch (NotFoundException | ServerException e) {
+                    workspaceId = getWorkspaceId(((String)arguments[0]));
+                } catch (NotFoundException e) {
                     //Can't authorize operation
                     throw new ServerException(e);
                 }
-                action = WorkspaceActions.RUN;
-                break;
-            }
-            case "getById": {
-                workspaceId = ((String)arguments[0]);
                 action = WorkspaceActions.READ;
                 break;
             }
-            case "getByName": {
-                String workspaceName = ((String)arguments[0]);
-                try {
-                    Workspace workspace = workspaceDao.get(currentUser.getId(), workspaceName);
-                    workspaceId = workspace.getId();
-                } catch (NotFoundException e) {
-                    throw new ServerException(e);
-                }
-                action = WorkspaceActions.READ;
-                break;
-            }
+
             case "update":
                 workspaceId = ((String)arguments[0]);
                 action = WorkspaceActions.CONFIGURE;
@@ -104,11 +89,6 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
             case "delete":
                 workspaceId = ((String)arguments[0]);
                 action = WorkspaceActions.DELETE;
-                break;
-
-            case "getRuntimeWorkspaceById":
-                workspaceId = ((String)arguments[0]);
-                action = WorkspaceActions.USE;
                 break;
 
             default:
@@ -130,5 +110,20 @@ public class WorkspacePermissionsFilter extends CheMethodInvokerFilter {
         if (!currentUser.hasPermission(WorkspaceDomain.DOMAIN_ID, workspaceId, action.toString())) {
             throw new ForbiddenException("User doesn't have permissions to perform this operation");
         }
+    }
+
+    /**
+     * Get workspace using composite key.
+     */
+    private String getWorkspaceId(String key) throws NotFoundException, ServerException {
+        String[] parts = key.split(":", -1); // -1 is to prevent skipping trailing part
+        if (parts.length == 1) {
+            return key;
+        }
+        final String userName = parts[0];
+        final String wsName = parts[1];
+        final String ownerId = userName.isEmpty() ? EnvironmentContext.getCurrent().getUser().getId()
+                                                  : userManager.getByName(userName).getId();
+        return workspaceManager.getWorkspace(wsName, ownerId).getId();
     }
 }

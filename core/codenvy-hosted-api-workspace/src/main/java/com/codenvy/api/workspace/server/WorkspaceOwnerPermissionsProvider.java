@@ -17,9 +17,7 @@ package com.codenvy.api.workspace.server;
 import com.codenvy.api.permission.server.PermissionManager;
 import com.codenvy.api.permission.server.Permissions;
 
-import org.eclipse.che.api.core.BadRequestException;
-import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
+import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
@@ -72,7 +70,7 @@ public class WorkspaceOwnerPermissionsProvider implements EventSubscriber<Worksp
                                                               Stream.of(WorkspaceDomain.WorkspaceActions.values())
                                                                     .map(WorkspaceDomain.WorkspaceActions::toString)
                                                                     .collect(Collectors.toList())));
-        } catch (ServerException e) {
+        } catch (ServerException | ConflictException e) {
             LOG.error("Can't add owner's permissions for workspace with id '" + event.getWorkspace().getId() + "'", e);
         }
     }

@@ -56,7 +56,7 @@ public class RamLimitInterceptor implements MethodInterceptor {
         final Object[] arguments = invocation.getArguments();
 
         WorkspaceConfig workspaceConfig;
-        String envName;
+        String envName = null;
         switch (methodName) {
             case "startById": {
                 String workspaceId = ((String)arguments[0]);
@@ -70,23 +70,8 @@ public class RamLimitInterceptor implements MethodInterceptor {
                 break;
             }
 
-            case "startByName": {
-                String workspaceName = ((String)arguments[0]);
-                envName = ((String)arguments[1]);
-                try {
-                    workspaceConfig = workspaceDao.get(workspaceName,
-                                                       EnvironmentContext.getCurrent().getUser().getId())
-                                                  .getConfig();
-                } catch (NotFoundException | ServerException e) {
-                    //Can't authorize operation
-                    throw new ServerException(e);
-                }
-                break;
-            }
-
-            case "startTemporary": {
+            case "startFromConfig": {
                 workspaceConfig = ((WorkspaceConfigDto)arguments[0]);
-                envName = ((String)arguments[1]);
                 break;
             }
             default:

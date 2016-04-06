@@ -16,17 +16,13 @@ package com.codenvy.api.permission.server;
 
 import com.codenvy.api.permission.server.dao.PermissionsStorage;
 
-import org.eclipse.che.api.core.BadRequestException;
 import org.eclipse.che.api.core.ConflictException;
-import org.eclipse.che.api.core.ForbiddenException;
-import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,22 +55,31 @@ public class PermissionManager {
     /**
      * @see PermissionsStorage#store(Permissions)
      */
-    public void storePermission(Permissions permission) throws ServerException {
-        domainToStorage.get(permission.getDomain()).store(permission);
+    public void storePermission(Permissions newPermissions) throws ServerException, ConflictException {
+        final String domain = newPermissions.getDomain();
+        final String instance = newPermissions.getInstance();
+        final String user = newPermissions.getUser();
+
+        final PermissionsStorage permissionsStorage = getPermissionsStorage(domain);
+        if (!newPermissions.getActions().contains("setPermissions")
+            && userHasLastSetPermissions(permissionsStorage, user, domain, instance)) {
+            throw new ConflictException("Can't edit permissions because there is not any another user with permission 'setPermissions'");
+        }
+        permissionsStorage.store(newPermissions);
     }
 
     /**
      * @see PermissionsStorage#get(String, String, String)
      */
-    public Permissions get(String user, String domain, String instance) throws ServerException {
-        return domainToStorage.get(domain).get(user, domain, instance);
+    public Permissions get(String user, String domain, String instance) throws ServerException, ConflictException {
+        return getPermissionsStorage(domain).get(user, domain, instance);
     }
 
     /**
      * @see PermissionsStorage#getByInstance(String, String)
      */
-    public List<Permissions> getByInstance(String domain, String instance) throws ServerException {
-        return domainToStorage.get(domain).getByInstance(domain, instance);
+    public List<Permissions> getByInstance(String domain, String instance) throws ServerException, ConflictException {
+        return getPermissionsStorage(domain).getByInstance(domain, instance);
     }
 
     /**
@@ -91,22 +96,26 @@ public class PermissionManager {
     /**
      * @see PermissionsStorage#get(String)
      */
-    public List<Permissions> get(String user, String domain) throws ServerException {
-        return domainToStorage.get(domain).get(user, domain);
+    public List<Permissions> get(String user, String domain) throws ServerException, ConflictException {
+        return getPermissionsStorage(domain).get(user, domain);
     }
 
     /**
      * @see PermissionsStorage#remove(String, String, String)
      */
     public void remove(String user, String domain, String instance) throws ConflictException, ServerException {
-        domainToStorage.get(domain).remove(user, domain, instance);
+        final PermissionsStorage permissionsStorage = getPermissionsStorage(domain);
+        if (userHasLastSetPermissions(permissionsStorage, user, domain, instance)) {
+            throw new ConflictException("Can't remove permissions because there is not any another user with permission 'setPermissions'");
+        }
+        permissionsStorage.remove(user, domain, instance);
     }
 
     /**
      * @see PermissionsStorage#exists(String, String, String, String)
      */
-    public boolean exists(String user, String domain, String instance, String action) throws ServerException {
-        return domainToStorage.get(domain).exists(user, domain, instance, action);
+    public boolean exists(String user, String domain, String instance, String action) throws ServerException, ConflictException {
+        return getPermissionsStorage(domain).exists(user, domain, instance, action);
     }
 
     /**
@@ -122,7 +131,28 @@ public class PermissionManager {
      * @param domainId
      *         id of domain
      */
-    public Set<String> getDomainsActions(String domainId) {
-        return domains.get(domainId).getAllowedActions();
+    public Set<String> getDomainsActions(String domainId) throws ConflictException {
+        final PermissionsDomain permissionsDomain = domains.get(domainId);
+        if (permissionsDomain == null) {
+            throw new ConflictException("Requested unsupported domain '" + domainId + "'");
+        }
+        return permissionsDomain.getAllowedActions();
+    }
+
+    private PermissionsStorage getPermissionsStorage(String domain) throws ConflictException {
+        final PermissionsStorage permissionsStorage = domainToStorage.get(domain);
+        if (permissionsStorage == null) {
+            throw new ConflictException("Requested unsupported domain '" + domain + "'");
+        }
+        return permissionsStorage;
+    }
+
+    private boolean userHasLastSetPermissions(PermissionsStorage permissionsStorage, String user, String domain, String instance)
+            throws ServerException, ConflictException {
+        return permissionsStorage.exists(user, domain, instance, "setPermissions")
+               && !permissionsStorage.getByInstance(domain, instance)
+                                     .stream()
+                                     .anyMatch(permission -> !permission.getUser().equals(user)
+                                                             && permission.getActions().contains("setPermissions"));
     }
 }
