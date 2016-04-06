@@ -321,5 +321,7 @@ public class OnPremisesIdeApiModule extends AbstractModule {
 
         //workspace activity service
         install(new com.codenvy.activity.server.inject.WorkspaceActivityModule());
+
+        bind(org.eclipse.che.api.machine.server.terminal.MachineTerminalLauncher.class);
     }
 }

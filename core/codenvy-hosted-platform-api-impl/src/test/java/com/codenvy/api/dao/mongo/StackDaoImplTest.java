@@ -63,7 +63,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.codenvy.api.dao.mongo.MongoUtil.documentsListAsMap;
-import static com.codenvy.api.dao.mongo.MongoUtil.mapAsDocumentsList;
 import static com.codenvy.api.dao.mongo.MongoUtilTest.mockWriteEx;
 import static com.mongodb.ErrorCategory.DUPLICATE_KEY;
 import static java.util.Arrays.asList;
@@ -508,7 +507,8 @@ public class StackDaoImplTest extends BaseDaoTest {
                                                                                                      "9090/udp",
                                                                                                      "someprotocol",
                                                                                                      "/some/path")),
-                                                                    Collections.singletonMap("key1", "value1"));
+                                                                    Collections.singletonMap("key1", "value1"),
+                                                                    null);
         final MachineConfigImpl machineCfg2 = new MachineConfigImpl(false,
                                                                     "non-dev-machine",
                                                                     "machine-type-2",
@@ -522,7 +522,8 @@ public class StackDaoImplTest extends BaseDaoTest {
                                                                                                      "9090/udp",
                                                                                                      "someprotocol",
                                                                                                      "/some/path")),
-                                                                    Collections.singletonMap("key1", "value1"));
+                                                                    Collections.singletonMap("key1", "value1"),
+                                                                    null);
 
         final EnvironmentImpl env1 = new EnvironmentImpl("my-environment", recipe, asList(machineCfg1, machineCfg2));
         final EnvironmentImpl env2 = new EnvironmentImpl("my-environment-2", recipe, singletonList(machineCfg1));
