@@ -41,6 +41,7 @@ import com.codenvy.auth.sso.client.filter.UriStartFromRequestFilter;
 import com.codenvy.auth.sso.server.RolesExtractor;
 import com.codenvy.auth.sso.server.organization.UserCreationValidator;
 import com.codenvy.auth.sso.server.organization.UserCreator;
+import com.codenvy.machine.authentication.server.launcher.WsAgentWithAuthLauncherImpl;
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -197,6 +198,11 @@ public class OnPremisesIdeApiModule extends AbstractModule {
         bind(TokenValidator.class).to(com.codenvy.auth.sso.server.BearerTokenValidator.class);
         bind(com.codenvy.auth.sso.oauth.SsoOAuthAuthenticationService.class);
 
+        //machine authentication
+        bind(com.codenvy.machine.authentication.server.MachineTokenRegistry.class);
+        bind(com.codenvy.machine.authentication.server.MachineTokenService.class);
+        install(new com.codenvy.machine.authentication.server.interceptor.InterceptorModule());
+
         //SSO
         Multibinder<com.codenvy.api.dao.authentication.AuthenticationHandler> handlerBinder =
                 Multibinder.newSetBinder(binder(), com.codenvy.api.dao.authentication.AuthenticationHandler.class);
@@ -317,7 +323,8 @@ public class OnPremisesIdeApiModule extends AbstractModule {
 
         install(new org.eclipse.che.plugin.docker.machine.DockerMachineModule());
 
-        bind(org.eclipse.che.api.machine.server.WsAgentLauncher.class).to(org.eclipse.che.api.machine.server.WsAgentLauncherImpl.class);
+        bind(org.eclipse.che.api.machine.server.WsAgentLauncher.class)
+                .to(com.codenvy.machine.authentication.server.launcher.WsAgentWithAuthLauncherImpl.class);
 
         //workspace activity service
         install(new com.codenvy.activity.server.inject.WorkspaceActivityModule());

@@ -18,25 +18,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>onpremises-assembly-parent</artifactId>
-        <groupId>com.codenvy.onpremises</groupId>
+        <artifactId>plugin-machine-authentication-parent</artifactId>
+        <groupId>com.codenvy.plugin</groupId>
         <version>4.1.0-RC1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
-    <groupId>com.codenvy.plugin</groupId>
-    <artifactId>codenvy-plugin-parent</artifactId>
-    <version>4.1.0-RC1-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>Codenvy Plugin Parent</name>
-    <modules>
-        <module>plugin-google</module>
-        <module>plugin-bitbucket</module>
-        <module>plugin-wso2</module>
-        <module>plugin-projectlocker</module>
-        <module>plugin-microsoft</module>
-        <module>plugin-contribution</module>
-        <module>plugin-hosted</module>
-        <module>plugin-webhooks</module>
-        <module>plugin-machine-authentication</module>
-    </modules>
+    <artifactId>codenvy-hosted-machine-authentication-shared</artifactId>
+    <name>Codenvy :: Hosted :: Machine Authentication :: Shared</name>
+    <dependencies>
+        <dependency>
+            <groupId>org.eclipse.che.core</groupId>
+            <artifactId>che-core-api-dto</artifactId>
+        </dependency>
+    </dependencies>
 </project>

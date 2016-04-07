@@ -110,7 +110,7 @@
                                 </replace>
                                 <replace file="${project.build.directory}/codenvy-cli-${project.version}/bin/codenvy">
                                     <replacetoken>main "$@"</replacetoken>
-                                    <replacevalue># update installation manager 
+                                    <replacevalue># update installation manager
 cd ~/codenvy-im
 
 if [ -f "update-im-cli" ]; then
