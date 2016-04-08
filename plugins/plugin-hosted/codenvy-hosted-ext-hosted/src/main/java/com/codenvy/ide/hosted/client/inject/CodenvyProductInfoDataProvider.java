@@ -53,8 +53,8 @@ public class CodenvyProductInfoDataProvider implements ProductInfoDataProvider {
     }
 
     @Override
-    public String getDocumentTitle(String project) {
-        return hostedLocalizationConstant.codenvyTabTitle(project);
+    public String getDocumentTitle(String workspaceName) {
+        return hostedLocalizationConstant.codenvyTabTitle(workspaceName);
     }
 
     @Override

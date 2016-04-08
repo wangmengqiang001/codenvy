@@ -24,11 +24,11 @@ import com.google.gwt.i18n.client.Messages;
  */
 public interface HostedLocalizationConstant extends Messages {
 
-    @Key("codenvy.none.project.selected.title")
+    @Key("codenvy.tab.title")
     String codenvyTabTitle();
 
-    @Key("codenvy.project.selected.title")
-    String codenvyTabTitle(String projectName);
+    @Key("codenvy.tab.title.with.workspace.name")
+    String codenvyTabTitle(String workspaceName);
 
     /* Connection closed dialog*/
     @Key("connection.closed.dialog.title")
