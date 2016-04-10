@@ -14,7 +14,7 @@
  */
 package com.codenvy.machine.authentication.server.launcher;
 
-import com.codenvy.machine.authentication.server.shared.dto.MachineTokenDto;
+import com.codenvy.machine.authentication.shared.dto.MachineTokenDto;
 
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.eclipse.che.api.core.ApiException;
@@ -40,6 +40,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Base64;
+import java.util.regex.Matcher;
 
 @Singleton
 public class WsAgentWithAuthLauncherImpl implements WsAgentLauncher {
@@ -90,8 +91,8 @@ public class WsAgentWithAuthLauncherImpl implements WsAgentLauncher {
     @Override
     public void startWsAgent(String workspaceId) throws NotFoundException, MachineException, InterruptedException {
         final String machineToken = getMachineToken(workspaceId).getMachineToken();
-        final String encryptedToken = Md5Crypt.apr1Crypt(machineToken);
-        final String start = wsAgentStartCommandLine.replaceAll("machine_token", "codenvy:" + encryptedToken);
+        final String userInfo = "codenvy:" + Md5Crypt.apr1Crypt(machineToken);
+        final String start = wsAgentStartCommandLine.replaceAll("machine_token", Matcher.quoteReplacement(userInfo));
         final Machine devMachine = getMachineManager().getDevMachine(workspaceId);
         try {
             getMachineManager().exec(devMachine.getId(),
@@ -129,7 +130,7 @@ public class WsAgentWithAuthLauncherImpl implements WsAgentLauncher {
                                                 .build()
                                                 .toString();
         return httpJsonRequestFactory.fromUrl(wsAgentPingUrl)
-                                     .setAuthorizationHeader("Basic "+ basicAuthHeader)
+                                     .setAuthorizationHeader("Basic " + basicAuthHeader)
                                      .setMethod(HttpMethod.GET)
                                      .setTimeout(wsAgentPingConnectionTimeoutMs);
     }
@@ -151,7 +152,7 @@ public class WsAgentWithAuthLauncherImpl implements WsAgentLauncher {
 
     private MachineTokenDto getMachineToken(String wsId) throws NotFoundException {
         final String tokenServiceUrl = UriBuilder.fromUri(apiEndpoint)
-                                                 .replacePath("/machine/token/" + wsId)
+                                                 .replacePath("api/machine/token/" + wsId)
                                                  .build()
                                                  .toString();
         final MachineTokenDto machineToken;
@@ -161,7 +162,7 @@ public class WsAgentWithAuthLauncherImpl implements WsAgentLauncher {
                                                  .request()
                                                  .asDto(MachineTokenDto.class);
         } catch (ApiException | IOException ignored) {
-            throw new NotFoundException("KOKOKO BRATAN!!");
+            throw new NotFoundException("Token not found bro");
         }
         return machineToken;
     }

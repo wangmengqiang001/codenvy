@@ -12,7 +12,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.machine.authentication.server.shared.dto;
+package com.codenvy.machine.authentication.shared.dto;
 
 import org.eclipse.che.dto.shared.DTO;
 

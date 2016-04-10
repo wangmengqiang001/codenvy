@@ -20,7 +20,7 @@
     <parent>
         <artifactId>plugin-machine-authentication-parent</artifactId>
         <groupId>com.codenvy.plugin</groupId>
-        <version>4.1.0-RC1-SNAPSHOT</version>
+        <version>4.2.0-RC1-SNAPSHOT</version>
     </parent>
     <artifactId>codenvy-hosted-machine-authentication-shared</artifactId>
     <name>Codenvy :: Hosted :: Machine Authentication :: Shared</name>
@@ -30,4 +30,11 @@
             <artifactId>che-core-api-dto</artifactId>
         </dependency>
     </dependencies>
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+            </resource>
+        </resources>
+    </build>
 </project>

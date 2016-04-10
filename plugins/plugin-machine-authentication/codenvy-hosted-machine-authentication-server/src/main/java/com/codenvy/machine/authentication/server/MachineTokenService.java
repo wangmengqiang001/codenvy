@@ -14,7 +14,7 @@
  */
 package com.codenvy.machine.authentication.server;
 
-import com.codenvy.machine.authentication.server.shared.dto.MachineTokenDto;
+import com.codenvy.machine.authentication.shared.dto.MachineTokenDto;
 
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.commons.env.EnvironmentContext;

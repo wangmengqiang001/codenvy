@@ -14,7 +14,7 @@
  */
 package com.codenvy.machine.authentication.client;
 
-import com.codenvy.machine.authentication.server.shared.dto.MachineTokenDto;
+import com.codenvy.machine.authentication.shared.dto.MachineTokenDto;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.inject.Inject;
 

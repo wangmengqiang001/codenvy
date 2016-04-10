@@ -20,7 +20,7 @@
     <parent>
         <artifactId>plugin-machine-authentication-parent</artifactId>
         <groupId>com.codenvy.plugin</groupId>
-        <version>4.1.0-RC1-SNAPSHOT</version>
+        <version>4.2.0-RC1-SNAPSHOT</version>
     </parent>
     <artifactId>codenvy-hosted-machine-authentication-ide</artifactId>
     <name>Codenvy :: Hosted :: Machine Authentication :: IDE</name>
