@@ -24,6 +24,16 @@
              che-add-button-name="Create Factory"
              che-add-button-href="#/factories/create-factory"></che-toolbar>
 <md-content md-scroll-y flex layout="column" md-theme="maincontent-theme" class="factories-list-factories">
+
+  <div class="create-factory-share-header-widget" ng-if="!listFactoriesCtrl.isLoading" flex layout-align="center center" layout="column">
+    <div layout="row" layout-align="start center">
+      <div class="create-factory-share-header-widget-icon"><i class="chefont cheico-rocket-chefont icon">&nbsp;</i></div>
+      <div layout="row" layout-fill layout-align="center center">
+        <div class="create-factory-share-header-widget-title">A factory is a template that generates workspaces packaged as a consumer-friendly URL. You can configure factories to customize the contents of a workspace, trigger post-loading actions, create default commands, and generate guided tours.  Factories can be badged with Markdown buttons or iframed to embed workspaces in other products.</div>
+      </div>
+    </div>
+  </div>
+
   <md-progress-linear md-mode="indeterminate" class="factories-list-factories-progress"
                       ng-if="listFactoriesCtrl.isLoading"></md-progress-linear>
   <md-content flex class="md-maincontent-theme-theme" ng-show="!listFactoriesCtrl.isLoading"

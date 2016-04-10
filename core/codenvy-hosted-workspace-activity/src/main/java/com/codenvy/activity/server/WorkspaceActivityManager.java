@@ -116,10 +116,10 @@ public class WorkspaceActivityManager {
                 try {
                     String workspaceId = workspaceExpireEntry.getKey();
 
-                    workspaceManager.stopWorkspace(workspaceId);
                     Workspace workspace = workspaceManager.getWorkspace(workspaceId);
                     workspace.getAttributes().put(WORKSPACE_STOPPED_BY, ACTIVITY_CHECKER);
                     workspaceManager.updateWorkspace(workspaceId, workspace);
+                    workspaceManager.stopWorkspace(workspaceId);
                 } catch (NotFoundException e) {
                     LOG.info("Workspace already stopped");
                 } catch (Exception ex) {

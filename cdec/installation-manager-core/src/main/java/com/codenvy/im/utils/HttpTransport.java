@@ -14,25 +14,32 @@
  */
 package com.codenvy.im.utils;
 
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.dto.server.DtoFactory;
 
-import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Singleton;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.PasswordAuthentication;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.Commons.copyInterruptable;
+import static com.google.api.client.repackaged.com.google.common.base.Strings.isNullOrEmpty;
 import static java.nio.file.Files.newOutputStream;
+import static java.lang.String.format;
+import static java.util.Objects.nonNull;
+import static java.util.regex.Pattern.compile;
 import static org.eclipse.che.commons.lang.IoUtil.deleteRecursive;
 import static org.eclipse.che.commons.lang.IoUtil.readAndCloseQuietly;
 
@@ -42,7 +49,36 @@ import static org.eclipse.che.commons.lang.IoUtil.readAndCloseQuietly;
  */
 @Singleton
 public class HttpTransport {
-    private static final Pattern FILE_NAME = Pattern.compile("attachment; filename=(.*)");
+    enum Protocol { HTTP, HTTPS;
+        private static final String GET_PROTOCOL_PREFIX = "^([^:]+):.*";
+        private static final Pattern GET_PROTOCOL_REGEXP  = compile(GET_PROTOCOL_PREFIX);
+
+        /**
+         * @return protocol of url in path = {"http"|"https"|null}
+         */
+        @Nullable
+        static Protocol obtainProtocol(String path) {
+            try {
+                String protStr;
+                Matcher matcher = GET_PROTOCOL_REGEXP.matcher(path);
+                if (matcher.find()) {
+                    protStr = matcher.group(1);
+
+                    if (Objects.isNull(protStr)) {
+                        return null;
+                    }
+
+                    return Protocol.valueOf(protStr.toUpperCase());
+                }
+            } catch (Exception e) {
+                return null;
+            }
+
+            return null;
+        }
+    }
+
+    private static final Pattern FILE_NAME = compile("attachment; filename=(.*)");
 
     /**
      * Performs OPTION request.
@@ -99,29 +135,8 @@ public class HttpTransport {
      * @throws com.codenvy.im.utils.HttpException
      *         if request failed
      */
-    public String doPost(String path, Object body) throws HttpException, IOException {
+    public String doPost(String path, Object body) throws IOException {
         return request(path, "POST", body, MediaType.APPLICATION_JSON, null);
-    }
-
-    private String request(String path,
-                           String method,
-                           @Nullable Object body,
-                           @Nullable String expectedContentType,
-                           @Nullable String accessToken) throws HttpException, IOException {
-        HttpURLConnection conn = null;
-
-        try {
-            conn = openConnection(path, accessToken);
-            request(method, body, expectedContentType, conn);
-            return readAndCloseQuietly(conn.getInputStream());
-        } catch (SocketTimeoutException e) { // catch exception and throw a new one with proper message
-            URL url = new URL(path);
-            throw new HttpException(-1, String.format("Can't establish connection with %s://%s", url.getProtocol(), url.getHost()));
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
     }
 
     /**
@@ -136,11 +151,59 @@ public class HttpTransport {
         return download(path, "GET", MediaType.APPLICATION_OCTET_STREAM, destinationDir);
     }
 
+    HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection)new URL(path).openConnection();
+
+        if (accessToken != null) {
+            String accessTokenCookie = String.format("session-access-key=%s;", accessToken);
+            connection.addRequestProperty("Cookie", accessTokenCookie);
+        }
+
+        return connection;
+    }
+
+    private String getHttpProxyUser(Protocol protocol) {
+        return System.getProperty(format("%s.proxyUser", protocol.toString().toLowerCase()));
+    }
+
+    private String getHttpProxyPassword(Protocol protocol) {
+        return System.getProperty(format("%s.proxyPassword", protocol.toString().toLowerCase()));
+    }
+
+    void setDefaultAuthenticator(final String proxyUser, final char[] proxyPassword) {
+        Authenticator.setDefault(new Authenticator() {
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(proxyUser, proxyPassword);
+            }
+        });
+    }
+
+    private String request(String path,
+                           String method,
+                           @Nullable Object body,
+                           @Nullable String expectedContentType,
+                           @Nullable String accessToken) throws IOException {
+        HttpURLConnection conn = null;
+
+        try {
+            conn = openConnection(path, accessToken);
+            request(method, body, expectedContentType, conn, Protocol.obtainProtocol(path));
+            return readAndCloseQuietly(conn.getInputStream());
+        } catch (SocketTimeoutException e) { // catch exception and throw a new one with proper message
+            URL url = new URL(path);
+            throw new HttpException(-1, format("Can't establish connection with %s://%s", url.getProtocol(), url.getHost()));
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
     private Path download(String path, String method, String expectedContentType, Path destinationDir) throws IOException {
         final HttpURLConnection conn = openConnection(path, null);
 
         try {
-            request(method, null, expectedContentType, conn);
+            request(method, null, expectedContentType, conn, Protocol.obtainProtocol(path));
 
             String headerField = conn.getHeaderField("Content-Disposition");
             if (headerField == null) {
@@ -176,7 +239,14 @@ public class HttpTransport {
     private void request(String method,
                          @Nullable Object body,
                          @Nullable String expectedContentType,
-                         HttpURLConnection conn) throws HttpException, IOException {
+                         HttpURLConnection conn,
+                         Protocol protocol) throws IOException {
+        if (Objects.isNull(protocol)) {
+            throw new IllegalArgumentException("Protocol is unknown.");
+        }
+
+        considerAuthenticatedProxy(protocol);
+
         conn.setConnectTimeout(30 * 1000);
         conn.setRequestMethod(method);
         if (body != null) {
@@ -203,14 +273,21 @@ public class HttpTransport {
         }
     }
 
-    protected HttpURLConnection openConnection(String path, @Nullable String accessToken) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection)new URL(path).openConnection();
+    /**
+     * "An optional user name, if required (as it is with a few FTP servers).
+     * The password, is present, follows the user name, separated from it by a colon; the user name and optional password are followed by a commercial at sign "@".
+     *
+     * @see <a href="http://www.w3.org/Addressing/URL/url-spec.txt">http://www.w3.org/Addressing/URL/url-spec.txt</a>
+     */
+    private void considerAuthenticatedProxy(Protocol protocol) {
+        String proxyUser = getHttpProxyUser(protocol);
+        char[] proxyPassword = new char[]{};
+        if (!isNullOrEmpty(proxyUser)) {
+            if (nonNull(getHttpProxyPassword(protocol))) {
+                proxyPassword = getHttpProxyPassword(protocol).toCharArray();
+            }
 
-        if (accessToken != null) {
-            String accessTokenCookie = String.format("session-access-key=%s;", accessToken);
-            connection.addRequestProperty("Cookie", accessTokenCookie);
+            setDefaultAuthenticator(proxyUser, proxyPassword);
         }
-
-        return connection;
     }
 }

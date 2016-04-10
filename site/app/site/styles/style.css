@@ -476,3 +476,10 @@ img.imgcenter {
 .thank-you-page h4{
 	color: #BAC8DA;
 }
+
+.notif {
+	font-size: 16px;
+    font-weight: 300;
+    color: #fff;
+	margin: 50px auto;
+}
